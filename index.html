@@ -3,119 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo-Gravity: Nexus | عالم المكعبات</title>
+    <title>Echo-Gravity: Nexus</title>
     <style>
         body {
             margin: 0;
-            background: #0f172a;
+            background: #090d16;
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-        }
-        canvas {
-            background: #1e293b;
-            border: 2px solid #10b981;
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
-            border-radius: 12px;
-            max-width: 95vw;
-            max-height: 60vh;
-        }
-        .ui {
-            margin-bottom: 8px;
-            text-align: center;
+            overflow: hidden;
         }
         h1 {
-            margin: 0 0 3px 0;
-            font-size: 16px;
-            color: #34d399;
-            text-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+            color: #10b981;
+            font-size: 18px;
+            margin: 0 0 5px 0;
+            text-align: center;
         }
         p {
-            margin: 0;
-            font-size: 11px;
             color: #94a3b8;
+            font-size: 12px;
+            margin: 0 0 10px 0;
         }
-        .controls {
+        canvas {
+            background: #111827;
+            border: 3px solid #10b981;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            max-width: 95vw;
+            max-height: 55vh;
+        }
+        .btn-container {
             display: flex;
             gap: 15px;
             margin-top: 15px;
         }
-        .btn-game {
-            background: linear-gradient(135deg, #059669, #10b981);
+        button {
+            background: #10b981;
             color: white;
             border: none;
-            padding: 14px 26px;
-            font-size: 15px;
+            padding: 14px 28px;
+            font-size: 16px;
             font-weight: bold;
-            border-radius: 40px;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+            border-radius: 30px;
             cursor: pointer;
-            outline: none;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
-        .btn-action {
-            background: linear-gradient(135deg, #2563eb, #3b82f6);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-        }
-        .btn-game:active {
+        button:active {
             transform: scale(0.95);
+        }
+        .btn-build {
+            background: #2563eb;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
         }
     </style>
 </head>
 <body>
 
-    <div class="ui">
-        <h1>Echo-Gravity: Nexus (Voxel Craft)</h1>
-        <p>عالم مكعبات، بناء، وقلب الجاذبية الفوري!</p>
-    </div>
+    <h1>Echo-Gravity: Nexus</h1>
+    <p>لعبة المكعبات والجاذبية - تعمل مباشرة من هاتفك</p>
 
-    <canvas id="gameCanvas" width="800" height="380"></canvas>
+    <canvas id="gameCanvas" width="750" height="350"></canvas>
 
-    <div class="controls">
-        <button class="btn-game" onclick="toggleGravity()">🔄 قلب الجاذبية</button>
-        <button class="btn-game btn-action" onclick="spawnBox()">📦 بناء صندوق</button>
+    <div class="btn-container">
+        <button onclick="toggleGravity()">🔄 قلب الجاذبية</button>
+        <button class="btn-build" onclick="spawnBox()">📦 بناء مكعب</button>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // البطل بتصميم المكعبات (Voxel Character)
         let player = {
-            x: 100,
-            y: 280,
-            width: 32,
-            height: 48,
+            x: 80,
+            y: 260,
+            w: 35,
+            h: 45,
             vy: 0,
             gravity: 0.5,
-            isFlipped: false,
-            color: "#3b82f6"
+            flipped: false
         };
 
-        // صناديق العالم والموارد (مثل ماينكرافت)
-        let worldBoxes = [
-            { x: 300, y: 300, width: 35, height: 35 },
-            { x: 500, y: 280, width: 35, height: 55 },
-            { x: 650, y: 260, width: 35, height: 75 }
+        let blocks = [
+            { x: 300, y: 280, w: 40, h: 40 },
+            { x: 500, y: 260, w: 40, h: 60 }
         ];
 
         let score = 0;
 
         function toggleGravity() {
-            player.isFlipped = !player.isFlipped;
+            player.flipped = !player.flipped;
             player.gravity = -player.gravity;
         }
 
         function spawnBox() {
-            worldBoxes.push({
-                x: player.x + 60,
-                y: player.isFlipped ? 60 : 280,
-                width: 35,
-                height: 35
+            blocks.push({
+                x: player.x + 70,
+                y: player.flipped ? 50 : 270,
+                w: 40,
+                h: 40
             });
             score += 10;
         }
@@ -124,57 +113,53 @@
             player.y += player.vy;
             player.vy += player.gravity;
 
-            if (!player.isFlipped && player.y > 280) {
-                player.y = 280;
+            if (!player.flipped && player.y > 260) {
+                player.y = 260;
                 player.vy = 0;
-            } else if (player.isFlipped && player.y < 50) {
-                player.y = 50;
+            } else if (player.flipped && player.y < 45) {
+                player.y = 45;
                 player.vy = 0;
             }
 
-            // تحريك الصناديق لتشكل عالماً متحركاً
-            worldBoxes.forEach(box => {
-                box.x -= 1.5;
-                if (box.x < -50) {
-                    box.x = canvas.width + 50;
-                    box.y = Math.random() > 0.5 ? 280 : 60;
+            blocks.forEach(b => {
+                b.x -= 2;
+                if (b.x < -50) {
+                    b.x = canvas.width + 50;
+                    b.y = Math.random() > 0.5 ? 260 : 50;
                 }
             });
         }
 
         function draw() {
-            // خلفية عالم المكعبات
-            ctx.fillStyle = "#1e293b";
+            // مسح الشاشة
+            ctx.fillStyle = "#111827";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // أرضية وسقف العالم
+            // الأرضية والسقف
             ctx.fillStyle = "#065f46";
-            ctx.fillRect(0, 0, canvas.width, 50); // السقف
-            ctx.fillRect(0, 328, canvas.width, 52); // الأرضية
+            ctx.fillRect(0, 0, canvas.width, 40);
+            ctx.fillRect(0, 310, canvas.width, 40);
 
-            // رسم صناديق ومكعبات العالم (Voxel Style)
-            worldBoxes.forEach(box => {
+            // رسم المكعبات
+            blocks.forEach(b => {
                 ctx.fillStyle = "#10b981";
-                ctx.fillRect(box.x, box.y, box.width, box.height);
-                // تأثير ثلاثي الأبعاد للمكعب
+                ctx.fillRect(b.x, b.y, b.w, b.h);
                 ctx.fillStyle = "#059669";
-                ctx.fillRect(box.x, box.y, box.width, 8);
+                ctx.fillRect(b.x, b.y, b.w, 8);
             });
 
-            // رسم البطل (شخصية المكعبات)
-            ctx.save();
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            // رسم البطل
+            ctx.fillStyle = "#3b82f6";
+            ctx.fillRect(player.x, player.y, player.w, player.h);
             
             // رأس البطل
             ctx.fillStyle = "#fde047";
-            ctx.fillRect(player.x + 4, player.isFlipped ? player.y + 32 : player.y - 12, 24, 14);
-            ctx.restore();
+            ctx.fillRect(player.x + 5, player.flipped ? player.y + 30 : player.y - 10, 25, 12);
 
             // النقاط
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = "white";
             ctx.font = "bold 15px Arial";
-            ctx.fillText("النقاط والموارد: " + score, 25, 32);
+            ctx.fillText("النقاط: " + score, 20, 28);
         }
 
         function loop() {

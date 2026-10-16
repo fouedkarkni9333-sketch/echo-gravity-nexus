@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo-Gravity: Nexus | النموذج الأولي</title>
+    <title>Echo-Gravity: Nexus | القتال الحي والأبطال</title>
     <style>
         body {
             margin: 0;
@@ -19,25 +19,25 @@
         }
         canvas {
             background: #111827;
-            border: 2px solid #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            border-radius: 8px;
+            border: 2px solid #ff007f;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.4);
+            border-radius: 10px;
             max-width: 95vw;
-            max-height: 70vh;
+            max-height: 75vh;
         }
         .ui {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
         }
         h1 {
-            margin: 0 0 5px 0;
-            font-size: 20px;
-            color: #00ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            margin: 0 0 3px 0;
+            font-size: 18px;
+            color: #ff007f;
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
         }
         p {
             margin: 0;
-            font-size: 13px;
+            font-size: 12px;
             color: #9ca3af;
         }
     </style>
@@ -45,124 +45,176 @@
 <body>
 
     <div class="ui">
-        <h1>Echo-Gravity: Nexus</h1>
-        <p>المس الشاشة لقلب الجاذبية وإطلاق النسخة الطيفية (Echo)!</p>
+        <h1>Echo-Gravity: Nexus (Combat Edition)</h1>
+        <p>مسافة (Space) أو النقر = قلب الجاذبية | زر (F) = إطلاق النار الحي!</p>
     </div>
 
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <canvas id="gameCanvas" width="850" height="450"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
+        // البطل الرئيسي (شخصية حية)
         let player = {
             x: 100,
-            y: 330,
-            width: 30,
-            height: 30,
+            y: 340,
+            width: 35,
+            height: 45,
             color: "#00ffff",
             vy: 0,
             gravity: 0.6,
-            isFlipped: false
+            isFlipped: false,
+            hp: 100
         };
 
-        let echoes = [];
-        let obstacles = [
-            { x: 500, y: 0, width: 40, height: 150 },
-            { x: 700, y: 250, width: 40, height: 150 }
+        // طلقات اللاعب النارية
+        let bullets = [];
+        // أعداء حيّون في الساحة
+        let enemies = [
+            { x: 600, y: 340, width: 35, height: 45, color: "#ff0055", hp: 30, speed: 2 }
         ];
 
         let score = 0;
 
+        // قلب الجاذبية
         function toggleGravity() {
             player.isFlipped = !player.isFlipped;
             player.gravity = -player.gravity;
-            
-            echoes.push({
-                x: player.x,
-                y: player.y,
-                color: "#ff007f",
-                opacity: 0.9
+        }
+
+        // إطلاق النار الحي
+        function shootBullet() {
+            bullets.push({
+                x: player.x + player.width,
+                y: player.y + player.height / 2,
+                width: 12,
+                height: 4,
+                speed: 8,
+                color: "#00ffff"
             });
-            
-            if (echoes.length > 5) echoes.shift();
         }
 
         window.addEventListener("keydown", (e) => {
-            if (e.code === "Space") toggleGravity();
+            if (e.code === "Space") {
+                e.preventDefault();
+                toggleGravity();
+            }
+            if (e.code === "KeyF" || e.code === "KeyJ") {
+                shootBullet();
+            }
         });
 
-        canvas.addEventListener("touchstart", (e) => {
-            e.preventDefault();
+        canvas.addEventListener("click", () => {
             toggleGravity();
         });
 
-        canvas.addEventListener("click", () => toggleGravity());
-
         function update() {
+            // حركة البطل
             player.y += player.vy;
             player.vy += player.gravity;
 
-            if (!player.isFlipped && player.y > 330) {
-                player.y = 330;
+            if (!player.isFlipped && player.y > 340) {
+                player.y = 340;
                 player.vy = 0;
-            } else if (player.isFlipped && player.y < 40) {
-                player.y = 40;
+            } else if (player.isFlipped && player.y < 50) {
+                player.y = 50;
                 player.vy = 0;
             }
 
-            obstacles.forEach(obs => {
-                obs.x -= 4;
-                if (obs.x + obs.width < 0) {
-                    obs.x = canvas.width + Math.random() * 200;
-                    score += 10;
+            // حركة وإدارة الطلقات
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].x += bullets[i].speed;
+                if (bullets[i].x > canvas.width) {
+                    bullets.splice(i, 1);
                 }
-            });
+            }
 
-            echoes.forEach(echo => {
-                echo.x -= 4;
-                echo.opacity -= 0.005;
+            // حركة الأعداء ومهاجمتهم
+            enemies.forEach((enemy, index) => {
+                enemy.x -= enemy.speed;
+                
+                // إعادة تدوير العدو إذا خرج من الشاشة
+                if (enemy.x < -50) {
+                    enemy.x = canvas.width + Math.random() * 300;
+                    enemy.y = Math.random() > 0.5 ? 340 : 50;
+                    enemy.hp = 30;
+                }
+
+                // اصطدام الطلقات بالعدو
+                bullets.forEach((bullet, bIndex) => {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        enemy.hp -= 15;
+                        bullets.splice(bIndex, 1);
+                        if (enemy.hp <= 0) {
+                            score += 50;
+                            enemy.x = canvas.width + 200;
+                            enemy.hp = 30;
+                        }
+                    }
+                });
             });
         }
 
         function draw() {
+            // مسح الخلفية بتصميم سيبراني حي
             ctx.fillStyle = "#111827";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.strokeStyle = "#1f2937";
-            ctx.lineWidth = 2;
+            // خطوط الأرض والسقف المستقبلية
+            ctx.strokeStyle = "#ff007f";
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(0, 40); ctx.lineTo(canvas.width, 40);
-            ctx.moveTo(0, 360); ctx.lineTo(canvas.width, 360);
+            ctx.moveTo(0, 50); ctx.lineTo(canvas.width, 50);
+            ctx.moveTo(0, 395); ctx.lineTo(canvas.width, 395);
             ctx.stroke();
 
-            ctx.fillStyle = "#374151";
-            obstacles.forEach(obs => {
-                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-                ctx.strokeStyle = "#00ffff";
-                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
-            });
-
-            echoes.forEach(echo => {
-                ctx.save();
-                ctx.globalAlpha = Math.max(echo.opacity, 0);
-                ctx.fillStyle = echo.color;
-                ctx.fillRect(echo.x, echo.y, player.width, player.height);
-                ctx.shadowColor = "#ff007f";
-                ctx.shadowBlur = 15;
-                ctx.restore();
-            });
-
+            // رسم البطل (شخصية حية مميزة)
             ctx.save();
             ctx.fillStyle = player.color;
             ctx.shadowColor = "#00ffff";
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 15;
             ctx.fillRect(player.x, player.y, player.width, player.height);
+            // تفاصيل الخوذة أو الوجه للبطل
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(player.isFlipped ? player.x + 20 : player.x + 20, player.y + 8, 8, 8);
             ctx.restore();
 
+            // رسم الأعداء الحيين
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.fillStyle = enemy.color;
+                ctx.shadowColor = "#ff0055";
+                ctx.shadowBlur = 15;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                // شريط صحة العدو الصغير فوقه
+                ctx.fillStyle = "#ff0000";
+                ctx.fillRect(enemy.x, enemy.y - 10, enemy.width, 4);
+                ctx.fillStyle = "#00ff00";
+                ctx.fillRect(enemy.x, enemy.y - 10, (enemy.width * (enemy.hp / 30)), 4);
+                ctx.restore();
+            });
+
+            // رسم طلقات النيران
+            bullets.forEach(bullet => {
+                ctx.save();
+                ctx.fillStyle = bullet.color;
+                ctx.shadowColor = "#00ffff";
+                ctx.shadowBlur = 10;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                ctx.restore();
+            });
+
+            // واجهة النقاط والصحة على الشاشة
             ctx.fillStyle = "#fff";
-            ctx.font = "16px Arial";
-            ctx.fillText("النقاط: " + score, 20, 30);
+            ctx.font = "bold 16px Arial";
+            ctx.fillText("النقاط (Score): " + score, 25, 30);
+            ctx.fillText("صحة البطل (HP): " + player.hp + "%", canvas.width - 180, 30);
         }
 
         function loop() {

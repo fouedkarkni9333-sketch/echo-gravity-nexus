@@ -13,6 +13,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none;
         }
         #canvas-container {
             width: 100vw;
@@ -25,51 +26,57 @@
             left: 15px;
             color: #00ffff;
             background: rgba(11, 15, 25, 0.85);
-            padding: 12px 18px;
+            padding: 10px 15px;
             border-radius: 12px;
             border: 1px solid rgba(0, 255, 255, 0.3);
             pointer-events: none;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+            z-index: 10;
         }
         #ui h1 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
+            margin: 0 0 3px 0;
+            font-size: 16px;
             letter-spacing: 1px;
             text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
         }
         #ui p {
             margin: 0;
-            font-size: 12px;
+            font-size: 11px;
             color: #a0aec0;
         }
         #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            border: 2px solid rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 50%;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
+            z-index: 5;
         }
+        /* Hotbar Selector */
         #hotbar {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
-            background: rgba(11, 15, 25, 0.85);
-            padding: 10px;
+            gap: 6px;
+            background: rgba(11, 15, 25, 0.9);
+            padding: 8px;
             border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(5px);
+            z-index: 10;
+            max-width: 95vw;
+            overflow-x: auto;
         }
         .slot {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border: 2px solid #2d3748;
             border-radius: 10px;
             display: flex;
@@ -77,64 +84,68 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s ease;
-            position: relative;
+            flex-shrink: 0;
         }
         .slot.active {
             border-color: #00ffff;
-            transform: scale(1.08);
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
         }
         .slot-color {
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             border-radius: 6px;
         }
-        #mobile-controls {
+        /* Mobile Control Layout */
+        #joystick-zone {
             position: absolute;
             bottom: 90px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 30px;
-            box-sizing: border-box;
-            pointer-events: none;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px dashed rgba(0, 255, 255, 0.2);
+            border-radius: 50%;
+            z-index: 10;
+            touch-action: none;
         }
-        .control-group {
-            display: grid;
-            grid-template-columns: repeat(3, 50px);
-            grid-gap: 6px;
-            pointer-events: auto;
-        }
-        .btn {
+        #joystick-knob {
+            position: absolute;
+            top: 35px;
+            left: 35px;
             width: 50px;
             height: 50px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            color: #00ffff;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: manipulation;
-        }
-        .btn:active {
             background: rgba(0, 255, 255, 0.3);
-        }
-        #jump-btn {
-            pointer-events: auto;
-            width: 70px;
-            height: 70px;
+            border: 1px solid rgba(0, 255, 255, 0.6);
             border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.05s linear;
+        }
+        .action-btns {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10;
+        }
+        .action-btn {
+            width: 60px;
+            height: 60px;
             background: rgba(0, 255, 255, 0.15);
             border: 1px solid rgba(0, 255, 255, 0.4);
             color: #00ffff;
+            font-size: 14px;
             font-weight: bold;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            align-self: flex-end;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .action-btn:active {
+            background: rgba(0, 255, 255, 0.4);
         }
     </style>
 </head>
@@ -142,10 +153,11 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>التحكم: W, A, S, D للحركة | الماوس للنظر | انقر للبناء أو الحذف</p>
+        <p>اسحب الشاشة للتحريك | عصا اليسار للحركة | أزرار اليمين للقفز والبناء</p>
     </div>
     <div id="crosshair"></div>
     
+    <!-- Hotbar -->
     <div id="hotbar">
         <div class="slot active" onclick="selectBlock(0)"><div class="slot-color" style="background:#2e7d32"></div></div>
         <div class="slot" onclick="selectBlock(1)"><div class="slot-color" style="background:#795548"></div></div>
@@ -157,28 +169,24 @@
         <div class="slot" onclick="selectBlock(7)"><div class="slot-color" style="background:#ffb300"></div></div>
     </div>
 
-    <div id="mobile-controls">
-        <div class="control-group">
-            <div></div>
-            <div class="btn" ontouchstart="moveState.forward=true" ontouchend="moveState.forward=false">⬆️</div>
-            <div></div>
-            <div class="btn" ontouchstart="moveState.left=true" ontouchend="moveState.left=false">⬅️</div>
-            <div class="btn" ontouchstart="moveState.backward=true" ontouchend="moveState.backward=false">⬇️</div>
-            <div class="btn" ontouchstart="moveState.right=true" ontouchend="moveState.right=false">➡️</div>
-        </div>
-        <div id="jump-btn" ontouchstart="triggerJump()">قفز</div>
+    <!-- Mobile Touch Controls -->
+    <div id="joystick-zone">
+        <div id="joystick-knob"></div>
+    </div>
+    <div class="action-btns">
+        <div class="action-btn" id="jump-btn">قفز</div>
+        <div class="action-btn" id="build-btn" style="background: rgba(255,179,0,0.2); border-color: rgba(255,179,0,0.5); color: #ffb300;">بناء</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         let scene, camera, renderer;
         let blocks = [];
-        let raycaster, mouse;
+        let raycaster;
         let selectedMaterialIndex = 0;
-        
         const blockColors = [0x2e7d32, 0x795548, 0x616161, 0x3e2723, 0x81c784, 0xe0e0e0, 0x00bcd4, 0xffb300];
         
-        const moveState = { forward: false, backward: false, left: false, right: false };
+        let moveVector = new THREE.Vector2(0, 0);
         let velocity = new THREE.Vector3();
         let position = new THREE.Vector3(0, 12, 10);
         let pitch = 0, yaw = 0;
@@ -189,7 +197,7 @@
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0b0f19);
-            scene.fog = new THREE.FogExp2(0x0b0f19, 0.035);
+            scene.fog = new THREE.FogExp2(0x0b0f19, 0.03);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             
@@ -205,12 +213,11 @@
             scene.add(dirLight);
 
             raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
 
-            // توليد عالم افتراضي أولي
-            for (let x = -6; x <= 6; x++) {
-                for (let z = -6; z <= 6; z++) {
-                    let h = Math.floor(Math.sin(x * 0.5) * Math.cos(z * 0.5) * 2) + 2;
+            // توليد التضاريس الافتراضية
+            for (let x = -8; x <= 8; x++) {
+                for (let z = -8; z <= 8; z++) {
+                    let h = Math.floor(Math.sin(x * 0.4) * Math.cos(z * 0.4) * 2) + 2;
                     for (let y = 0; y <= h; y++) {
                         let matIdx = (y === h) ? 0 : (y > 1 ? 1 : 2);
                         createBlock(x, y, z, blockColors[matIdx]);
@@ -219,37 +226,7 @@
             }
 
             window.addEventListener('resize', onWindowResize);
-            document.addEventListener('mousedown', onMouseDown);
-            
-            // تحكم الماوس للكمبيوتر
-            let isMouseDown = false;
-            let prevMouseX = 0, prevMouseY = 0;
-            document.addEventListener('mousemove', (e) => {
-                if (document.pointerLockElement === document.body || e.buttons === 2) {
-                    yaw -= e.movementX * 0.003;
-                    pitch -= e.movementY * 0.003;
-                    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-                }
-            });
-            document.body.addEventListener('click', () => {
-                document.body.requestPointerLock();
-            });
-
-            // لوحة المفاتيح
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'w' || e.key === 'W') moveState.forward = true;
-                if (e.key === 's' || e.key === 'S') moveState.backward = true;
-                if (e.key === 'a' || e.key === 'A') moveState.left = true;
-                if (e.key === 'd' || e.key === 'D') moveState.right = true;
-                if (e.key === ' ') triggerJump();
-                if (e.key >= '1' && e.key <= '8') selectBlock(parseInt(e.key) - 1);
-            });
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'w' || e.key === 'W') moveState.forward = false;
-                if (e.key === 's' || e.key === 'S') moveState.backward = false;
-                if (e.key === 'a' || e.key === 'A') moveState.left = false;
-                if (e.key === 'd' || e.key === 'D') moveState.right = false;
-            });
+            setupTouchAndMouseControls();
         }
 
         function createBlock(x, y, z, colorHex) {
@@ -270,34 +247,143 @@
             });
         }
 
-        function triggerJump() {
-            if (position.y <= 2.1) {
-                velocity.y = 0.12;
+        // إعداد أدوات التحكم التفاعلية باللمس والماوس
+        function setupTouchAndMouseControls() {
+            // عصا الحركة (Joystick)
+            const zone = document.getElementById('joystick-zone');
+            const knob = document.getElementById('joystick-knob');
+            let joystickTouchId = null;
+            let zoneRect = zone.getBoundingClientRect();
+
+            zone.addEventListener('touchstart', (e) => {
+                if (joystickTouchId === null) {
+                    const touch = e.changedTouches[0];
+                    joystickTouchId = touch.identifier;
+                    updateJoystick(touch);
+                }
+            });
+
+            zone.addEventListener('touchmove', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === joystickTouchId) {
+                        updateJoystick(touch);
+                    }
+                }
+            });
+
+            function endJoystick(e) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickTouchId) {
+                        joystickTouchId = null;
+                        moveVector.set(0, 0);
+                        knob.style.transform = `translate(0px, 0px)`;
+                    }
+                }
             }
+            zone.addEventListener('touchend', endJoystick);
+            zone.addEventListener('touchcancel', endJoystick);
+
+            function updateJoystick(touch) {
+                zoneRect = zone.getBoundingClientRect();
+                let centerX = zoneRect.left + zoneRect.width / 2;
+                let centerY = zoneRect.top + zoneRect.height / 2;
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                let maxDist = 45;
+
+                if (dist > maxDist) {
+                    dx = (dx / dist) * maxDist;
+                    dy = (dy / dist) * maxDist;
+                }
+
+                knob.style.transform = `translate(${dx}px, ${dy}px)`;
+                moveVector.set(dx / maxDist, dy / maxDist);
+            }
+
+            // تدوير الكاميرا بسحب الشاشة (Touch Look / Mouse Look)
+            let isDragging = false;
+            let prevX = 0, prevY = 0;
+
+            window.addEventListener('touchstart', (e) => {
+                // إذا لم يكن اللمس على العصا أو أزرار واجهة المستخدم
+                if (e.target.closest('#joystick-zone') || e.target.closest('#hotbar') || e.target.closest('.action-btns')) return;
+                isDragging = true;
+                prevX = e.touches[0].clientX;
+                prevY = e.touches[0].clientY;
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                let touch = null;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].clientX > window.innerWidth / 3) { // الجهة اليمنى للسحب
+                        touch = e.touches[i];
+                        break;
+                    }
+                }
+                if (!touch) return;
+
+                let deltaX = touch.clientX - prevX;
+                let deltaY = touch.clientY - prevY;
+                prevX = touch.clientX;
+                prevY = touch.clientY;
+
+                yaw -= deltaX * 0.005;
+                pitch -= deltaY * 0.005;
+                pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+            });
+
+            window.addEventListener('touchend', () => { isDragging = false; });
+
+            // دعم الماوس للكمبيوتر أيضاً
+            window.addEventListener('mousedown', (e) => {
+                if (e.target.closest('#hotbar') || e.target.closest('.action-btns')) return;
+                document.body.requestPointerLock();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === document.body) {
+                    yaw -= e.movementX * 0.003;
+                    pitch -= e.movementY * 0.003;
+                    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+                }
+            });
+
+            // أزرار القفز والبناء
+            document.getElementById('jump-btn').addEventListener('touchstart', () => {
+                if (position.y <= 2.1) velocity.y = 0.12;
+            });
+
+            // زر التفاعل (حذف أو بناء عند النقر في المنتصف)
+            let tapCount = 0;
+            document.getElementById('build-btn').addEventListener('touchstart', () => {
+                performInteraction(true); // بناء كتلة
+            });
+
+            window.addEventListener('click', () => {
+                if (document.pointerLockElement === document.body) {
+                    performInteraction(false); // حذف بالنقرة اليسرى
+                }
+            });
         }
 
-        function onMouseDown(e) {
-            if (document.pointerLockElement !== document.body) return;
-            
+        function performInteraction(isBuilding) {
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             const intersects = raycaster.intersectObjects(blocks);
 
             if (intersects.length > 0) {
                 const intersect = intersects[0];
-                if (e.button === 0) {
-                    // حذف الكتل
-                    scene.remove(intersect.object);
-                    blocks = blocks.filter(b => b !== intersect.object);
-                } else if (e.button === 2) {
-                    // بناء كتلة جديدة
+                if (isBuilding) {
                     const pos = intersect.object.position.clone().add(intersect.face.normal);
                     createBlock(pos.x, pos.y, pos.z, blockColors[selectedMaterialIndex]);
+                } else {
+                    scene.remove(intersect.object);
+                    blocks = blocks.filter(b => b !== intersect.object);
                 }
             }
         }
-
-        // إلغاء القائمة المنسدلة للزر الأيمن
-        document.addEventListener('contextmenu', e => e.preventDefault());
 
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -308,14 +394,9 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // حساب الحركة
+            // حركة اللاعب عبر عصا التحكم أو لوحة المفاتيح
             let speed = 0.08;
-            let dir = new THREE.Vector3();
-            if (moveState.forward) dir.z -= 1;
-            if (moveState.backward) dir.z += 1;
-            if (moveState.left) dir.x -= 1;
-            if (moveState.right) dir.x += 1;
-            dir.normalize();
+            let dir = new THREE.Vector3(moveVector.x, 0, moveVector.y);
             dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
             
             position.x += dir.x * speed;
@@ -331,7 +412,6 @@
 
             camera.position.copy(position);
             
-            // تحديث زاوية الكاميرا
             let euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
             camera.quaternion.setFromEuler(euler);
 

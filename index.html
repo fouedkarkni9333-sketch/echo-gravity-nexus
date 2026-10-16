@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Echo-Gravity: Nexus | عالم المكعبات المفتوح</title>
+    <title>Echo-Gravity: Nexus | عالم المكعبات</title>
     <style>
         body {
             margin: 0;
-            background: #1a1c29;
+            background: #0f172a;
             color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
@@ -17,29 +17,23 @@
             justify-content: center;
             height: 100vh;
         }
-        #canvas-container {
-            width: 100vw;
-            height: 75vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        .ui-overlay {
-            position: absolute;
-            top: 15px;
-            z-index: 10;
-            text-align: center;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 10px 25px;
-            border-radius: 12px;
+        canvas {
+            background: #1e293b;
             border: 2px solid #10b981;
-            backdrop-filter: blur(6px);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+            border-radius: 12px;
+            max-width: 95vw;
+            max-height: 60vh;
+        }
+        .ui {
+            margin-bottom: 8px;
+            text-align: center;
         }
         h1 {
-            margin: 0 0 4px 0;
-            font-size: 17px;
+            margin: 0 0 3px 0;
+            font-size: 16px;
             color: #34d399;
-            text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+            text-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
         }
         p {
             margin: 0;
@@ -47,185 +41,149 @@
             color: #94a3b8;
         }
         .controls {
-            position: absolute;
-            bottom: 20px;
-            z-index: 10;
             display: flex;
             gap: 15px;
+            margin-top: 15px;
         }
         .btn-game {
             background: linear-gradient(135deg, #059669, #10b981);
             color: white;
             border: none;
-            padding: 15px 28px;
+            padding: 14px 26px;
             font-size: 15px;
             font-weight: bold;
             border-radius: 40px;
-            box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
             cursor: pointer;
             outline: none;
-            transition: 0.1s;
         }
         .btn-action {
             background: linear-gradient(135deg, #2563eb, #3b82f6);
-            box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
         .btn-game:active {
             transform: scale(0.95);
         }
     </style>
-    <!-- تضمين مكتبة Three.js ثلاثية الأبعاد -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <div class="ui-overlay">
-        <h1>Echo-Gravity: Nexus (Voxel Craft Edition)</h1>
-        <p>عالم مكعبات مفتوح، بناء، وقلب الجاذبية الطيفي!</p>
+    <div class="ui">
+        <h1>Echo-Gravity: Nexus (Voxel Craft)</h1>
+        <p>عالم مكعبات، بناء، وقلب الجاذبية الفوري!</p>
     </div>
 
-    <div id="canvas-container"></div>
+    <canvas id="gameCanvas" width="800" height="380"></canvas>
 
     <div class="controls">
         <button class="btn-game" onclick="toggleGravity()">🔄 قلب الجاذبية</button>
-        <button class="btn-game btn-action" onclick="spawnEchoBox()">📦 بناء صندوق / نسخ</button>
+        <button class="btn-game btn-action" onclick="spawnBox()">📦 بناء صندوق</button>
     </div>
 
     <script>
-        // إعداد مشهد العالم الافتراضي بنمط المكعبات
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0f172a);
-        scene.fog = new THREE.FogExp2(0x0f172a, 0.02);
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 6, 14);
-        camera.lookAt(0, 2, 0);
+        // البطل بتصميم المكعبات (Voxel Character)
+        let player = {
+            x: 100,
+            y: 280,
+            width: 32,
+            height: 48,
+            vy: 0,
+            gravity: 0.5,
+            isFlipped: false,
+            color: "#3b82f6"
+        };
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        container.appendChild(renderer.domElement);
+        // صناديق العالم والموارد (مثل ماينكرافت)
+        let worldBoxes = [
+            { x: 300, y: 300, width: 35, height: 35 },
+            { x: 500, y: 280, width: 35, height: 55 },
+            { x: 650, y: 260, width: 35, height: 75 }
+        ];
 
-        // الإضاءة
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0x34d399, 1);
-        dirLight.position.set(15, 30, 15);
-        scene.add(dirLight);
-
-        // بناء أرضية المكعبات (تشبه ماينكرافت)
-        const groundGeo = new THREE.BoxGeometry(40, 1, 40);
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.9 });
-        const ground = new THREE.Mesh(groundGeo, groundMat);
-        ground.position.y = -0.5;
-        scene.add(ground);
-
-        // بناء مكعبات الأشجار والبيئة في العالم المفتوح
-        function createVoxelTree(x, z) { جذع الشجرة
-            const trunkGeo = new THREE.BoxGeometry(0.8, 3, 0.8);
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f });
-            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-            trunk.position.set(x, 1.5, z);
-            scene.add(trunk);
-
-            // أوراق الشجرة (مكعبات خضراء)
-            const leavesGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5);
-            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x047857 });
-            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-            leaves.position.set(x, 3.5, z);
-            scene.add(leaves);
-        }
-
-        createVoxelTree(-5, -6);
-        createVoxelTree(6, -8);
-        createVoxelTree(-8, -3);
-
-        // تصميم شخصية البطل بأسلوب المكعبات والكتل (Voxel Character)
-        function createVoxelCharacter(color) {
-            const group = new THREE.Group();
-
-            // الجسم
-            const bodyGeo = new THREE.BoxGeometry(1, 1.2, 0.6);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: color });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1.1;
-            group.add(body);
-
-            // الرأس
-            const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-            const headMat = new THREE.MeshStandardMaterial({ color: 0xfde047 }); // لون مميز للوجه
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 2.0;
-            group.add(head);
-
-            // الأرجل
-            const legGeo = new THREE.BoxGeometry(0.35, 0.8, 0.35);
-            const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-            
-            const leftLeg = new THREE.Mesh(legGeo, legMat);
-            leftLeg.position.set(-0.25, 0.4, 0);
-            group.add(leftLeg);
-
-            const rightLeg = new THREE.Mesh(legGeo, legMat);
-            rightLeg.position.set(0.25, 0.4, 0);
-            group.add(rightLeg);
-
-            return group;
-        }
-
-        // إضافة البطل للساحة
-        const player = createVoxelCharacter(0x2563eb); // لون أزرق للمقاتل
-        player.position.set(-3, 0, 2);
-        scene.add(player);
-
-        // صندوق أو عنصر تم إنشاؤه في العالم
-        const boxes = [];
-
-        let isGravityFlipped = false;
+        let score = 0;
 
         function toggleGravity() {
-            isGravityFlipped = !isGravityFlipped;
+            player.isFlipped = !player.isFlipped;
+            player.gravity = -player.gravity;
         }
 
-        function spawnEchoBox() {
-            // إنشاء صندوق طيفي جديد في العالم (مثل نظام البناء والتغطية)
-            const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-            const boxMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.3 });
-            const newBox = new THREE.Mesh(boxGeo, boxMat);
-            newBox.position.set(player.position.x + 2, isGravityFlipped ? 3.5 : 0.5, player.position.z);
-            scene.add(newBox);
-            boxes.push(newBox);
+        function spawnBox() {
+            worldBoxes.push({
+                x: player.x + 60,
+                y: player.isFlipped ? 60 : 280,
+                width: 35,
+                height: 35
+            });
+            score += 10;
         }
 
-        // حلقة التشغيل والتحريك المستمر
-        function animate() {
-            requestAnimationFrame(animate);
+        function update() {
+            player.y += player.vy;
+            player.vy += player.gravity;
 
-            // تفاعل الجاذبية والقفز للبطل
-            if (isGravityFlipped) {
-                player.position.y += (3.5 - player.position.y) * 0.15;
-                player.rotation.z = Math.PI;
-            } else {
-                player.position.y += (0 - player.position.y) * 0.15;
-                player.rotation.z = 0;
+            if (!player.isFlipped && player.y > 280) {
+                player.y = 280;
+                player.vy = 0;
+            } else if (player.isFlipped && player.y < 50) {
+                player.y = 50;
+                player.vy = 0;
             }
 
-            // حركة خفيفة للحفاظ على حيوية المشهد
-            player.position.x += Math.sin(Date.now() * 0.003) * 0.01;
-
-            renderer.render(scene, camera);
+            // تحريك الصناديق لتشكل عالماً متحركاً
+            worldBoxes.forEach(box => {
+                box.x -= 1.5;
+                if (box.x < -50) {
+                    box.x = canvas.width + 50;
+                    box.y = Math.random() > 0.5 ? 280 : 60;
+                }
+            });
         }
 
-        animate();
+        function draw() {
+            // خلفية عالم المكعبات
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // التكيف مع شاشات الهواتف عند تغيير الوضع
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            // أرضية وسقف العالم
+            ctx.fillStyle = "#065f46";
+            ctx.fillRect(0, 0, canvas.width, 50); // السقف
+            ctx.fillRect(0, 328, canvas.width, 52); // الأرضية
+
+            // رسم صناديق ومكعبات العالم (Voxel Style)
+            worldBoxes.forEach(box => {
+                ctx.fillStyle = "#10b981";
+                ctx.fillRect(box.x, box.y, box.width, box.height);
+                // تأثير ثلاثي الأبعاد للمكعب
+                ctx.fillStyle = "#059669";
+                ctx.fillRect(box.x, box.y, box.width, 8);
+            });
+
+            // رسم البطل (شخصية المكعبات)
+            ctx.save();
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // رأس البطل
+            ctx.fillStyle = "#fde047";
+            ctx.fillRect(player.x + 4, player.isFlipped ? player.y + 32 : player.y - 12, 24, 14);
+            ctx.restore();
+
+            // النقاط
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 15px Arial";
+            ctx.fillText("النقاط والموارد: " + score, 25, 32);
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
     </script>
 </body>
 </html>

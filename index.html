@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #0b0f19;
+            background-color: #05070d;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
@@ -25,19 +25,19 @@
             top: 15px;
             left: 15px;
             color: #00ffff;
-            background: rgba(11, 15, 25, 0.85);
-            padding: 10px 15px;
+            background: rgba(5, 7, 13, 0.85);
+            padding: 12px 18px;
             border-radius: 12px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.4);
             pointer-events: none;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
             z-index: 10;
         }
         #ui h1 {
             margin: 0 0 3px 0;
             font-size: 16px;
             letter-spacing: 1px;
-            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
         }
         #ui p {
             margin: 0;
@@ -52,32 +52,31 @@
             height: 12px;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(0, 255, 255, 0.9);
             border-radius: 50%;
-            box-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
             z-index: 5;
         }
-        /* Hotbar Selector */
         #hotbar {
             position: absolute;
             bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 6px;
-            background: rgba(11, 15, 25, 0.9);
-            padding: 8px;
+            gap: 8px;
+            background: rgba(5, 7, 13, 0.9);
+            padding: 10px;
             border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
             z-index: 10;
             max-width: 95vw;
             overflow-x: auto;
         }
         .slot {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #2d3748;
+            width: 42px;
+            height: 42px;
+            border: 2px solid #1a202c;
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -89,14 +88,13 @@
         .slot.active {
             border-color: #00ffff;
             transform: scale(1.1);
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
         }
         .slot-color {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 6px;
         }
-        /* Mobile Control Layout */
         #joystick-zone {
             position: absolute;
             bottom: 90px;
@@ -104,7 +102,7 @@
             width: 120px;
             height: 120px;
             background: rgba(0, 255, 255, 0.05);
-            border: 2px dashed rgba(0, 255, 255, 0.2);
+            border: 2px dashed rgba(0, 255, 255, 0.25);
             border-radius: 50%;
             z-index: 10;
             touch-action: none;
@@ -115,8 +113,8 @@
             left: 35px;
             width: 50px;
             height: 50px;
-            background: rgba(0, 255, 255, 0.3);
-            border: 1px solid rgba(0, 255, 255, 0.6);
+            background: rgba(0, 255, 255, 0.35);
+            border: 1px solid rgba(0, 255, 255, 0.7);
             border-radius: 50%;
             pointer-events: none;
             transition: transform 0.05s linear;
@@ -142,7 +140,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.25);
         }
         .action-btn:active {
             background: rgba(0, 255, 255, 0.4);
@@ -153,29 +151,28 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>اسحب الشاشة للتحريك | عصا اليسار للحركة | أزرار اليمين للقفز والبناء</p>
+        <p>عالم الكتل الفضائي | اسحب الشاشة للتجول والبناء</p>
     </div>
     <div id="crosshair"></div>
     
-    <!-- Hotbar -->
+    <!-- قائمة المواد والكتل الفضائية المضيئة -->
     <div id="hotbar">
-        <div class="slot active" onclick="selectBlock(0)"><div class="slot-color" style="background:#2e7d32"></div></div>
-        <div class="slot" onclick="selectBlock(1)"><div class="slot-color" style="background:#795548"></div></div>
-        <div class="slot" onclick="selectBlock(2)"><div class="slot-color" style="background:#616161"></div></div>
-        <div class="slot" onclick="selectBlock(3)"><div class="slot-color" style="background:#3e2723"></div></div>
-        <div class="slot" onclick="selectBlock(4)"><div class="slot-color" style="background:#81c784"></div></div>
-        <div class="slot" onclick="selectBlock(5)"><div class="slot-color" style="background:#e0e0e0"></div></div>
-        <div class="slot" onclick="selectBlock(6)"><div class="slot-color" style="background:#00bcd4"></div></div>
-        <div class="slot" onclick="selectBlock(7)"><div class="slot-color" style="background:#ffb300"></div></div>
+        <div class="slot active" onclick="selectBlock(0)"><div class="slot-color" style="background:#00ffcc"></div></div>
+        <div class="slot" onclick="selectBlock(1)"><div class="slot-color" style="background:#4b0082"></div></div>
+        <div class="slot" onclick="selectBlock(2)"><div class="slot-color" style="background:#374151"></div></div>
+        <div class="slot" onclick="selectBlock(3)"><div class="slot-color" style="background:#8b4513"></div></div>
+        <div class="slot" onclick="selectBlock(4)"><div class="slot-color" style="background:#00ff00"></div></div>
+        <div class="slot" onclick="selectBlock(5)"><div class="slot-color" style="background:#e0f2fe"></div></div>
+        <div class="slot" onclick="selectBlock(6)"><div class="slot-color" style="background:#ff007f"></div></div>
+        <div class="slot" onclick="selectBlock(7)"><div class="slot-color" style="background:#fbbf24"></div></div>
     </div>
 
-    <!-- Mobile Touch Controls -->
     <div id="joystick-zone">
         <div id="joystick-knob"></div>
     </div>
     <div class="action-btns">
         <div class="action-btn" id="jump-btn">قفز</div>
-        <div class="action-btn" id="build-btn" style="background: rgba(255,179,0,0.2); border-color: rgba(255,179,0,0.5); color: #ffb300;">بناء</div>
+        <div class="action-btn" id="build-btn" style="background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.5); color: #fbbf24;">بناء</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -184,11 +181,13 @@
         let blocks = [];
         let raycaster;
         let selectedMaterialIndex = 0;
-        const blockColors = [0x2e7d32, 0x795548, 0x616161, 0x3e2723, 0x81c784, 0xe0e0e0, 0x00bcd4, 0xffb300];
+        
+        // ألوان الكتل ذات الطابع الفضائي والمستقبلي المضيء
+        const blockColors = [0x00ffcc, 0x4b0082, 0x374151, 0x8b4513, 0x00ff00, 0xe0f2fe, 0xff007f, 0xfbbf24];
         
         let moveVector = new THREE.Vector2(0, 0);
         let velocity = new THREE.Vector3();
-        let position = new THREE.Vector3(0, 12, 10);
+        let position = new THREE.Vector3(0, 15, 12);
         let pitch = 0, yaw = 0;
 
         init();
@@ -196,8 +195,8 @@
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0b0f19);
-            scene.fog = new THREE.FogExp2(0x0b0f19, 0.03);
+            scene.background = new THREE.Color(0x05070d);
+            scene.fog = new THREE.FogExp2(0x05070d, 0.025);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             
@@ -205,21 +204,26 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // إضاءة محيطية وفضائية ساحرة
+            const ambientLight = new THREE.AmbientLight(0x88ccff, 0.7);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0x00ffff, 0.8);
-            dirLight.position.set(20, 40, 20);
+            const dirLight = new THREE.DirectionalLight(0x00ffff, 1.0);
+            dirLight.position.set(30, 60, 30);
             scene.add(dirLight);
+
+            // إضافة نجوم متلألئة في السماء الخلفية
+            createCosmicStars();
 
             raycaster = new THREE.Raycaster();
 
-            // توليد التضاريس الافتراضية
-            for (let x = -8; x <= 8; x++) {
-                for (let z = -8; z <= 8; z++) {
-                    let h = Math.floor(Math.sin(x * 0.4) * Math.cos(z * 0.4) * 2) + 2;
+            // توليد عالم وتضاريس متسعة وأكثر دقة (عالم فضائي مدمج)
+            for (let x = -12; x <= 12; x++) {
+                for (let z = -12; z <= 12; z++) {
+                    let h = Math.floor(Math.sin(x * 0.3) * Math.cos(z * 0.3) * 3) + 3;
                     for (let y = 0; y <= h; y++) {
-                        let matIdx = (y === h) ? 0 : (y > 1 ? 1 : 2);
+                        let matIdx = (y === h) ? 0 : (y > 2 ? 1 : 2);
+                        if (Math.random() < 0.05 && y === h) matIdx = 6; // بلورات نيون متفرقة
                         createBlock(x, y, z, blockColors[matIdx]);
                     }
                 }
@@ -229,9 +233,31 @@
             setupTouchAndMouseControls();
         }
 
+        function createCosmicStars() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsCount = 600;
+            const starPositions = new Float32Array(starsCount * 3);
+
+            for(let i = 0; i < starsCount * 3; i += 3) {
+                starPositions[i] = (Math.random() - 0.5) * 400;
+                starPositions[i+1] = Math.random() * 200 + 20;
+                starPositions[i+2] = (Math.random() - 0.5) * 400;
+            }
+
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starsMaterial = new THREE.PointsMaterial({color: 0xffffff, size: 1.2, transparent: true, opacity: 0.8});
+            const starField = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(starField);
+        }
+
         function createBlock(x, y, z, colorHex) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
-            const material = new THREE.MeshLambertMaterial({ color: colorHex });
+            // استخدام مواد مضيئة وتفاعلية مع الإضاءة
+            const material = new THREE.MeshStandardMaterial({ 
+                color: colorHex,
+                roughness: 0.3,
+                metalness: 0.2
+            });
             const cube = new THREE.Mesh(geometry, material);
             cube.position.set(x, y, z);
             scene.add(cube);
@@ -247,9 +273,7 @@
             });
         }
 
-        // إعداد أدوات التحكم التفاعلية باللمس والماوس
         function setupTouchAndMouseControls() {
-            // عصا الحركة (Joystick)
             const zone = document.getElementById('joystick-zone');
             const knob = document.getElementById('joystick-knob');
             let joystickTouchId = null;
@@ -302,12 +326,10 @@
                 moveVector.set(dx / maxDist, dy / maxDist);
             }
 
-            // تدوير الكاميرا بسحب الشاشة (Touch Look / Mouse Look)
             let isDragging = false;
             let prevX = 0, prevY = 0;
 
             window.addEventListener('touchstart', (e) => {
-                // إذا لم يكن اللمس على العصا أو أزرار واجهة المستخدم
                 if (e.target.closest('#joystick-zone') || e.target.closest('#hotbar') || e.target.closest('.action-btns')) return;
                 isDragging = true;
                 prevX = e.touches[0].clientX;
@@ -318,7 +340,7 @@
                 if (!isDragging) return;
                 let touch = null;
                 for (let i = 0; i < e.touches.length; i++) {
-                    if (e.touches[i].clientX > window.innerWidth / 3) { // الجهة اليمنى للسحب
+                    if (e.touches[i].clientX > window.innerWidth / 3) {
                         touch = e.touches[i];
                         break;
                     }
@@ -337,7 +359,6 @@
 
             window.addEventListener('touchend', () => { isDragging = false; });
 
-            // دعم الماوس للكمبيوتر أيضاً
             window.addEventListener('mousedown', (e) => {
                 if (e.target.closest('#hotbar') || e.target.closest('.action-btns')) return;
                 document.body.requestPointerLock();
@@ -351,20 +372,17 @@
                 }
             });
 
-            // أزرار القفز والبناء
             document.getElementById('jump-btn').addEventListener('touchstart', () => {
-                if (position.y <= 2.1) velocity.y = 0.12;
+                if (position.y <= 2.1) velocity.y = 0.13;
             });
 
-            // زر التفاعل (حذف أو بناء عند النقر في المنتصف)
-            let tapCount = 0;
             document.getElementById('build-btn').addEventListener('touchstart', () => {
-                performInteraction(true); // بناء كتلة
+                performInteraction(true);
             });
 
             window.addEventListener('click', () => {
                 if (document.pointerLockElement === document.body) {
-                    performInteraction(false); // حذف بالنقرة اليسرى
+                    performInteraction(false);
                 }
             });
         }
@@ -394,15 +412,13 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // حركة اللاعب عبر عصا التحكم أو لوحة المفاتيح
-            let speed = 0.08;
+            let speed = 0.09;
             let dir = new THREE.Vector3(moveVector.x, 0, moveVector.y);
             dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
             
             position.x += dir.x * speed;
             position.z += dir.z * speed;
 
-            // الجاذبية والقفز
             velocity.y -= 0.006;
             position.y += velocity.y;
             if (position.y < 2) {
@@ -412,11 +428,4 @@
 
             camera.position.copy(position);
             
-            let euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
-            camera.quaternion.setFromEuler(euler);
-
-            renderer.render(scene, camera);
-        }
-    </script>
-</body>
-</html>
+            let euler = new THREE.Euler(pitch, yaw

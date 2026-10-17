@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Ultra Realistic City v4</title>
+    <title>Echo Gravity Nexus - Ultra Realistic Living City</title>
     <style>
         body {
             margin: 0;
@@ -70,8 +70,8 @@
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
-        <h1>Echo Gravity Nexus v4</h1>
-        <p>مدينة حية واقعية | اصطدامات صلبة دقيقة</p>
+        <h1>Echo Gravity Nexus - مدينة حية واقعية</h1>
+        <p>متاجر ملابس، ملاهي ليلية، أبواب ونوافذ تفصيلية</p>
         <p id="status-txt">الحالة: تجول حر | الصحة: 100</p>
     </div>
     
@@ -230,6 +230,8 @@
             }
 
             const buildingColors = [0xf8fafc, 0xe2e8f0, 0xfed7aa, 0xddd6fe];
+            let buildingCount = 0;
+            
             for (let x = -MAP_LIMIT + 50; x <= MAP_LIMIT - 50; x += 60) {
                 for (let z = -MAP_LIMIT + 50; z <= MAP_LIMIT - 50; z += 60) {
                     if (Math.abs(x) < 20 && Math.abs(z) < 20) continue;
@@ -243,6 +245,36 @@
 
                     let box = new THREE.Box3().setFromObject(bMesh);
                     buildingBoxes.push(box);
+
+                    // إضافة أبواب ونوافذ واقعية ومتاجر ملابس وملاهي ليلية
+                    let doorMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+                    let door = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), doorMat);
+                    door.position.set(x + 15, 2.5, z + 15 + bDepth / 2 + 0.2);
+                    scene.add(door);
+
+                    // مظهر خاص لمحلات الملابس أو الملاهي الليلية بناءً على موقع المبنى
+                    if (buildingCount % 3 === 0) {
+                        let signMat = new THREE.MeshBasicMaterial({ color: 0xec4899 }); // محل ملابس (زهري)
+                        let sign = new THREE.Mesh(new THREE.BoxGeometry(8, 1.5, 0.5), signMat);
+                        sign.position.set(x + 15, 6, z + 15 + bDepth / 2 + 0.3);
+                        scene.add(sign);
+                    } else if (buildingCount % 4 === 0) {
+                        let neonMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6 }); // ملهى ليلي (نيون بنفسجي)
+                        let neon = new THREE.Mesh(new THREE.BoxGeometry(10, 2, 0.5), neonMat);
+                        neon.position.set(x + 15, 7, z + 15 + bDepth / 2 + 0.3);
+                        scene.add(neon);
+                    }
+
+                    // نوافذ زجاجية متكررة
+                    let winMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.7, roughness: 0.1 });
+                    for (let wy = 10; wy < bHeight - 4; wy += 6) {
+                        for (let wx = -7; wx <= 7; wx += 7) {
+                            let win = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 0.4), winMat);
+                            win.position.set(x + 15 + wx, wy, z + 15 + bDepth / 2 + 0.2);
+                            scene.add(win);
+                        }
+                    }
+                    buildingCount++;
                 }
             }
 
@@ -297,7 +329,7 @@
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
                 
-                // تصحيح الاتجاهات بدقة تامة: الأمام للأمام، الخلف للخلف، اليمين يمين، واليسار يسار
+                // ضبط الاتجاهات بدقة تامة: اليمين يمين واليسار يسار والأمام أمام والخلف خلف
                 moveVector.set(dx / maxD, -dy / maxD);
             }
 
@@ -361,22 +393,19 @@
             }
         }
 
-        // نظام الاصطدام الفيزيائي الصلب (منع الاختراق تماماً للمباني، الأشخاص، والسيارة)
+        // نظام الاصطدام الفيزيائي الصلب لمنع اختراق المباني والسيارة والمواطنين تماماً
         function checkCollision(newPos) {
             let playerBox = new THREE.Box3(
                 new THREE.Vector3(newPos.x - 0.4, newPos.y, newPos.z - 0.4),
                 new THREE.Vector3(newPos.x + 0.4, newPos.y + 1.8, newPos.z + 0.4)
             );
 
-            // اصطدام مع المباني
             for (let box of buildingBoxes) {
                 if (box.intersectsBox(playerBox)) return true;
             }
 
-            // اصطدام مع السيارة (تعتبر جسماً حقيقياً صلباً لا يمكن اختراقه)
             if (!isDriving && carBox && carBox.intersectsBox(playerBox)) return true;
 
-            // اصطدام مع المواطنين
             for (let npc of npcs) {
                 let npcPos = npc.group.position;
                 let npcBox = new THREE.Box3(
@@ -447,7 +476,7 @@
                 }
             }
 
-            // حركة المواطنين مع التحقق من عدم اختراق المباني
+            // حركة المواطنين مع منعهم نهائياً من دخول المباني أو اختراقها
             npcs.forEach(npc => {
                 let nextNpcZ = npc.group.position.z + 0.04;
                 if (nextNpcZ > MAP_LIMIT - 10) nextNpcZ = -MAP_LIMIT + 10;
@@ -467,7 +496,7 @@
                 if (!hitsBuilding) {
                     npc.group.position.z = nextNpcZ;
                 } else {
-                    npc.group.position.z = -MAP_LIMIT + 10; // إعادة التوجيه عند الاصطدام بالمبنى
+                    npc.group.position.z = -MAP_LIMIT + 10;
                 }
                 updateLimbAnimation(npc, true);
             });

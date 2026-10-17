@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Ultra Realistic Physics</title>
+    <title>Echo Gravity Nexus - Ultra Realistic City v4</title>
     <style>
         body {
             margin: 0;
@@ -70,8 +70,8 @@
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
-        <h1>Echo Gravity Nexus v3</h1>
-        <p>فيزياء واقعية كاملة واصطدامات دقيقة</p>
+        <h1>Echo Gravity Nexus v4</h1>
+        <p>مدينة حية واقعية | اصطدامات صلبة دقيقة</p>
         <p id="status-txt">الحالة: تجول حر | الصحة: 100</p>
     </div>
     
@@ -94,7 +94,7 @@
         let buildingBoxes = [];
         let bullets = [];
         
-        let carObj;
+        let carObj, carBox;
         let isDriving = false;
         let carPos = new THREE.Vector3(15, 0, 15);
 
@@ -175,11 +175,9 @@
             return { group, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
         }
 
-        // تصميم سيارة كاملة مع العجلات الأربع بدقة
         function createCarWithWheels() {
             const carGroup = new THREE.Group();
             
-            // هيكل السيارة
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(2.2, 1, 4.5),
                 new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5, roughness: 0.2 })
@@ -187,7 +185,6 @@
             body.position.y = 0.9;
             carGroup.add(body);
 
-            // سقف السيارة وزجاجها
             const top = new THREE.Mesh(
                 new THREE.BoxGeometry(1.8, 0.8, 2.2),
                 new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8 })
@@ -195,16 +192,13 @@
             top.position.set(0, 1.7, -0.2);
             carGroup.add(top);
 
-            // تصميم العجلات الأربع وتثبيتها في أماكنها الصحيحة
             const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
             wheelGeo.rotateZ(Math.PI / 2);
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
 
             const wheelPositions = [
-                [-1.1, 0.4, 1.4],   // أمامي أيسر
-                [1.1, 0.4, 1.4],    // أمامي أيمن
-                [-1.1, 0.4, -1.4],  // خلفي أيسر
-                [1.1, 0.4, -1.4]    // خلفي أيمن
+                [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
+                [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
             ];
 
             wheelPositions.forEach(pos => {
@@ -214,6 +208,7 @@
             });
 
             carGroup.position.copy(carPos);
+            carBox = new THREE.Box3().setFromObject(carGroup);
             return carGroup;
         }
 
@@ -246,7 +241,6 @@
                     bMesh.position.set(x + 15, bHeight / 2, z + 15);
                     scene.add(bMesh);
 
-                    // صندوق اصطدام دقيق جداً لكل مبنى لمنع الاختراق نهائياً
                     let box = new THREE.Box3().setFromObject(bMesh);
                     buildingBoxes.push(box);
                 }
@@ -303,7 +297,7 @@
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
                 
-                // تم تعديل إشارات المحاور لتتوافق تماماً: اليمين يمين واليسار يسار
+                // تصحيح الاتجاهات بدقة تامة: الأمام للأمام، الخلف للخلف، اليمين يمين، واليسار يسار
                 moveVector.set(dx / maxD, -dy / maxD);
             }
 
@@ -367,19 +361,22 @@
             }
         }
 
-        // نظام فحص الاصطدامات الواقعي مع المباني والأشخاص
+        // نظام الاصطدام الفيزيائي الصلب (منع الاختراق تماماً للمباني، الأشخاص، والسيارة)
         function checkCollision(newPos) {
             let playerBox = new THREE.Box3(
                 new THREE.Vector3(newPos.x - 0.4, newPos.y, newPos.z - 0.4),
                 new THREE.Vector3(newPos.x + 0.4, newPos.y + 1.8, newPos.z + 0.4)
             );
 
-            // فحص الاصطدام مع المباني
+            // اصطدام مع المباني
             for (let box of buildingBoxes) {
                 if (box.intersectsBox(playerBox)) return true;
             }
 
-            // فحص الاصطدام مع المواطنين (NPCs)
+            // اصطدام مع السيارة (تعتبر جسماً حقيقياً صلباً لا يمكن اختراقه)
+            if (!isDriving && carBox && carBox.intersectsBox(playerBox)) return true;
+
+            // اصطدام مع المواطنين
             for (let npc of npcs) {
                 let npcPos = npc.group.position;
                 let npcBox = new THREE.Box3(
@@ -404,9 +401,18 @@
 
                 if (isDriving) {
                     let nextCarPos = carPos.clone().addScaledVector(moveDir, speed);
-                    if (Math.abs(nextCarPos.x) < MAP_LIMIT - 3 && Math.abs(nextCarPos.z) < MAP_LIMIT - 3) {
+                    let tempCarBox = carBox.clone();
+                    tempCarBox.setFromCenterAndSize(nextCarPos.clone().add(new THREE.Vector3(0, 1, 0)), new THREE.Vector3(2.2, 2, 4.5));
+                    
+                    let carCollides = false;
+                    for (let box of buildingBoxes) {
+                        if (box.intersectsBox(tempCarBox)) { carCollides = true; break; }
+                    }
+
+                    if (!carCollides && Math.abs(nextCarPos.x) < MAP_LIMIT - 3 && Math.abs(nextCarPos.z) < MAP_LIMIT - 3) {
                         carPos.copy(nextCarPos);
                         carObj.position.copy(carPos);
+                        carBox.setFromObject(carObj);
                         carObj.rotation.y = Math.atan2(moveDir.x, moveDir.z);
                         playerPos.copy(carPos);
                     }
@@ -415,7 +421,6 @@
                     nextPos.x += moveDir.x * speed;
                     nextPos.z += moveDir.z * speed;
 
-                    // تطبيق الفيزياء ومنع التداخل تماماً مع المباني أو الأشخاص
                     if (!checkCollision(nextPos) && Math.abs(nextPos.x) < MAP_LIMIT - 3 && Math.abs(nextPos.z) < MAP_LIMIT - 3) {
                         playerPos.copy(nextPos);
                     }
@@ -442,9 +447,28 @@
                 }
             }
 
+            // حركة المواطنين مع التحقق من عدم اختراق المباني
             npcs.forEach(npc => {
-                npc.group.position.z += 0.04;
-                if (npc.group.position.z > MAP_LIMIT - 10) npc.group.position.z = -MAP_LIMIT + 10;
+                let nextNpcZ = npc.group.position.z + 0.04;
+                if (nextNpcZ > MAP_LIMIT - 10) nextNpcZ = -MAP_LIMIT + 10;
+                
+                let npcTestPos = npc.group.position.clone();
+                npcTestPos.z = nextNpcZ;
+                let npcBox = new THREE.Box3(
+                    new THREE.Vector3(npcTestPos.x - 0.4, npcTestPos.y, npcTestPos.z - 0.4),
+                    new THREE.Vector3(npcTestPos.x + 0.4, npcTestPos.y + 1.8, npcTestPos.z + 0.4)
+                );
+
+                let hitsBuilding = false;
+                for (let box of buildingBoxes) {
+                    if (box.intersectsBox(npcBox)) { hitsBuilding = true; break; }
+                }
+
+                if (!hitsBuilding) {
+                    npc.group.position.z = nextNpcZ;
+                } else {
+                    npc.group.position.z = -MAP_LIMIT + 10; // إعادة التوجيه عند الاصطدام بالمبنى
+                }
                 updateLimbAnimation(npc, true);
             });
 

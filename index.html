@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Combat City</title>
+    <title>Echo Gravity Nexus - Third Person City</title>
     <style>
         body {
             margin: 0;
@@ -25,7 +25,7 @@
             top: 15px;
             left: 15px;
             color: #38bdf8;
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.85);
             padding: 12px 18px;
             border-radius: 12px;
             border: 2px solid #38bdf8;
@@ -34,27 +34,18 @@
         }
         #ui h1 { margin: 0 0 3px 0; font-size: 16px; }
         #ui p { margin: 0; font-size: 11px; color: #94a3b8; }
-        #crosshair {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 16px; height: 16px;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            border: 2px solid #ef4444;
-            border-radius: 50%;
-            z-index: 5;
-        }
+        
         #joystick-zone {
             position: absolute; bottom: 30px; left: 30px;
             width: 130px; height: 130px;
-            background: rgba(56, 189, 248, 0.1);
+            background: rgba(56, 189, 248, 0.15);
             border: 2px solid #38bdf8;
             border-radius: 50%; z-index: 10;
         }
         #joystick-knob {
             position: absolute; top: 40px; left: 40px;
             width: 50px; height: 50px;
-            background: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.6);
             border-radius: 50%; pointer-events: none;
         }
         .action-btns {
@@ -63,7 +54,7 @@
         }
         .action-btn {
             width: 65px; height: 65px;
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.25);
             border: 2px solid #ef4444;
             color: #ef4444; font-weight: bold; font-size: 14px;
             border-radius: 50%;
@@ -76,65 +67,48 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>المدينة الكبرى للقتال | استكشف الشوارع والمباني</p>
+        <p>منظور الشخص الثالث | تحكم بالبطل واستكشف المدينة الضخمة</p>
     </div>
-    <div id="crosshair"></div>
     
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div class="action-btns">
         <div class="action-btn" id="jump-btn">قفز</div>
-        <div class="action-btn" id="fire-btn" style="background: rgba(56,189,248,0.2); border-color: #38bdf8; color: #38bdf8;">إطلاق</div>
+        <div class="action-btn" id="fire-btn" style="background: rgba(56,189,248,0.25); border-color: #38bdf8; color: #38bdf8;">هجوم</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        let scene, camera, renderer, blocks = [], raycaster;
+        let scene, camera, renderer, playerGroup, playerMesh;
         let moveVector = new THREE.Vector2(0, 0);
-        let velocity = new THREE.Vector3();
-        let position = new THREE.Vector3(0, 5, 20);
-        let pitch = 0, yaw = 0;
+        let playerVelocity = new THREE.Vector3();
+        let playerPos = new THREE.Vector3(0, 1, 0);
+        let camYaw = 0, camPitch = 0.3;
 
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020617);
-            scene.fog = new THREE.FogExp2(0x020617, 0.015);
+            scene.background = new THREE.Color(0x0a0f1d);
+            scene.fog = new THREE.FogExp2(0x0a0f1d, 0.008);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            // إضاءة ملونة وسعة للمدينة
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.5);
+            const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
             dirLight.position.set(50, 100, 50);
             scene.add(dirLight);
 
-            raycaster = new THREE.Raycaster();
+            // 1. إنشاء مجسم شخصية اللاعب (Player Avatar - Third Person)
+            createPlayerCharacter();
 
-            // بناء مدينة واسعة وكبيرة جداً (ناطحات سحاب وشوارع)
-            const citySize = 30; // توسيع المدينة
-            for (let x = -citySize; x <= citySize; x += 3) {
-                for (let z = -citySize; z <= citySize; z += 3) {
-                    // أرضية الشوارع والمدينة
-                    createBlock(x, 0, z, 0x1e293b);
-                    createBlock(x+1, 0, z, 0x1e293b);
-
-                    // ترك مسافات للشوارع، وبناء مبانٍ شاهقة مختلفة الأطوال
-                    if (Math.abs(x) > 4 || Math.abs(z) > 4) {
-                        let buildingHeight = Math.floor(Math.abs(Math.sin(x * 0.5) * Math.cos(z * 0.5)) * 12) + 3;
-                        for (let y = 1; y <= buildingHeight; y++) {
-                            // ألوان نيون مختلفة للمباني والزجاج
-                            let col = (y === buildingHeight) ? 0x38bdf8 : (y % 2 === 0 ? 0x0f172a : 0x334155);
-                            createBlock(x, y, z, col);
-                            createBlock(x+1, y, z, col);
-                        }
-                    }
-                }
-            }
+            // 2. إنشاء أرضية وشوارع ومباني مدينة ضخمة ومتنوعة الألوان
+            buildGiantCity();
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -145,13 +119,88 @@
             setupControls();
         }
 
-        function createBlock(x, y, z, colorHex) {
-            const geometry = new THREE.BoxGeometry(2, 1, 2);
-            const material = new THREE.MeshBasicMaterial({ color: colorHex });
-            const cube = new THREE.Mesh(geometry, material);
-            cube.position.set(x, y, z);
-            scene.add(cube);
-            blocks.push(cube);
+        // إنشاء شخصية بطل متكاملة (رأس، جسم، أذرع وأرجل)
+        function createPlayerCharacter() {
+            playerGroup = new THREE.Group();
+
+            // الجسم (Body)
+            const bodyGeo = new THREE.BoxGeometry(0.8, 1.2, 0.5);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.3 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1.1;
+            playerGroup.add(body);
+
+            // الرأس (Head)
+            const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xff00ff, roughness: 0.2 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 2.0;
+            playerGroup.add(head);
+
+            // الأذرع (Arms)
+            const armGeo = new THREE.BoxGeometry(0.25, 0.9, 0.25);
+            const armMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8 });
+            
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.set(-0.55, 1.1, 0);
+            playerGroup.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.set(0.55, 1.1, 0);
+            playerGroup.add(rightArm);
+
+            // الأرجل (Legs)
+            const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+
+            const leftLeg = new THREE.Mesh(legGeo, legMat);
+            leftLeg.position.set(-0.2, 0.45, 0);
+            playerGroup.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeo, legMat);
+            rightLeg.position.set(0.2, 0.45, 0);
+            playerGroup.add(rightLeg);
+
+            scene.add(playerGroup);
+        }
+
+        // بناء مدينة ضخمة وشوارع واسعة
+        function buildGiantCity() {
+            // أرضية واسعة جداً (Ground)
+            const groundGeo = new THREE.PlaneGeometry(500, 500);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            // شبكة خطوط الشوارع المضيئة
+            const gridHelper = new THREE.GridHelper(500, 50, 0x00ffff, 0x334155);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            // ألوان المباني المستقبليين
+            const buildingColors = [0x1e293b, 0x0284c7, 0x7c3aed, 0xdb2777, 0x059669];
+
+            // توزيع ناطحات السحاب والمباني على مساحة كبيرة
+            for (let x = -150; x <= 150; x += 25) {
+                for (let z = -150; z <= 150; z += 25) {
+                    // ترك مسارات واسعة في المنتصف للشوارع والقتال
+                    if (Math.abs(x) < 20 && Math.abs(z) < 20) continue;
+
+                    let width = 12 + Math.random() * 6;
+                    let depth = 12 + Math.random() * 6;
+                    let height = 20 + Math.random() * 60; // مباني عالية جداً
+
+                    const bGeo = new THREE.BoxGeometry(width, height, depth);
+                    const bMat = new THREE.MeshStandardMaterial({ 
+                        color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
+                        roughness: 0.4
+                    });
+                    const building = new THREE.Mesh(bGeo, bMat);
+                    building.position.set(x, height / 2, z);
+                    scene.add(building);
+                }
+            }
         }
 
         function setupControls() {
@@ -185,6 +234,7 @@
                 moveVector.set(dx/maxD, dy/maxD);
             }
 
+            // تدوير الكاميرا بسحب الجهة اليمنى للشاشة
             let dragging = false, px = 0, py = 0;
             window.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#joystick-zone') || e.target.closest('.action-btns')) return;
@@ -194,36 +244,62 @@
                 if (!dragging) return;
                 let t = Array.from(e.touches).find(item => item.clientX > window.innerWidth / 3);
                 if (!t) return;
-                yaw -= (t.clientX - px) * 0.005;
-                pitch -= (t.clientY - py) * 0.005;
-                pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+                camYaw -= (t.clientX - px) * 0.005;
+                camPitch -= (t.clientY - py) * 0.003;
+                camPitch = Math.max(0.1, Math.min(1.2, camPitch)); // تحديد زاوية الكاميرا
                 px = t.clientX; py = t.clientY;
             });
             window.addEventListener('touchend', () => { dragging = false; });
 
+            // القفز
             document.getElementById('jump-btn').addEventListener('touchstart', () => {
-                if (position.y <= 2.1) velocity.y = 0.15;
+                if (playerPos.y <= 0.01) playerVelocity.y = 0.22;
             });
 
+            // الهجوم
             document.getElementById('fire-btn').addEventListener('touchstart', () => {
-                // تأثير إطلاق النار في المدينة
-                alert("تم إطلاق طلقة طاقة في المدينة! جاهز لإضافة الأعداء.");
+                // تأثير هجوم مخصص للشخصية
+                playerGroup.position.y += 0.2;
+                setTimeout(() => playerGroup.position.y -= 0.2, 100);
             });
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            let speed = 0.12;
-            let dir = new THREE.Vector3(moveVector.x, 0, moveVector.y).applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
-            position.x += dir.x * speed;
-            position.z += dir.z * speed;
 
-            velocity.y -= 0.006;
-            position.y += velocity.y;
-            if (position.y < 2) { position.y = 2; velocity.y = 0; }
+            // سرعة وحركة الشخصية
+            let speed = 0.18;
+            if (moveVector.length() > 0) {
+                let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.y).normalize();
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
+                
+                playerPos.x += moveDir.x * speed;
+                playerPos.z += moveDir.z * speed;
 
-            camera.position.copy(position);
-            camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+                // تدوير وجه الشخصية نحو اتجاه الحركة
+                let angle = Math.atan2(moveDir.x, moveDir.z);
+                playerGroup.rotation.y = angle;
+            }
+
+            // الجاذبية والقفز
+            playerVelocity.y -= 0.01;
+            playerPos.y += playerVelocity.y;
+            if (playerPos.y < 0) {
+                playerPos.y = 0;
+                playerVelocity.y = 0;
+            }
+
+            playerGroup.position.copy(playerPos);
+
+            // موقع الكاميرا خلف الشخصية (Third Person Camera Setup)
+            let camDistance = 8;
+            let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
+            let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2;
+            let camZ = playerPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
+
+            camera.position.set(camX, camY, camZ);
+            camera.lookAt(playerPos.x, playerPos.y + 1.5, playerPos.z);
+
             renderer.render(scene, camera);
         }
     </script>

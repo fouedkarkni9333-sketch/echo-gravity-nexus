@@ -36,7 +36,6 @@
         #ui h1 { margin: 0 0 2px 0; font-size: 16px; color: #0284c7; }
         #ui p { margin: 0; font-size: 11px; color: #334155; }
         
-        /* واجهة الواقع الافتراضي عند دخول المحلات */
         #store-modal {
             position: absolute;
             top: 50%;
@@ -94,7 +93,7 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>المدينة الكبرى | تحريك تفصيلي للأيدي والأرجل + حدود محددة للخريطة</p>
+        <p>المدينة الواقعية المتكاملة | متاجر حقيقية وشخصيات تفاعلية</p>
     </div>
 
     <div id="store-modal">
@@ -117,18 +116,17 @@
         let playerPos = new THREE.Vector3(0, 0, 10);
         let camYaw = 0, camPitch = 0.3;
         let npcs = [];
-        let walkCycle = 0;
         let buildingBoxes = [];
         let stores = [];
 
-        const MAP_LIMIT = 240; // حدود الخريطة والمدينة الكبيرة
+        const MAP_LIMIT = 240;
 
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x7dd3fc); // سماء مشمسة
+            scene.background = new THREE.Color(0x7dd3fc);
             scene.fog = new THREE.FogExp2(0x7dd3fc, 0.003);
 
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -145,11 +143,9 @@
             sunLight.castShadow = true;
             scene.add(sunLight);
 
-            // 1. إنشاء بطل غني بالتفاصيل (عيون، شعر، وأطراف متحركة)
             playerObj = createHumanoidCharacter(0x0284c7, 0x1e293b, 0x38bdf8, true);
             scene.add(playerObj.group);
 
-            // 2. بناء المدينة الكبرى مع تفاصيل زجاج النوافذ، الأبواب، وحواجز الحدود
             buildMassiveRealisticCity();
 
             window.addEventListener('resize', () => {
@@ -161,11 +157,9 @@
             setupControls();
         }
 
-        // دالة إنشاء شخصيات بشرية واقعية بملامح وأعضاء قابلة للتحريك
         function createHumanoidCharacter(shirtColor, pantsColor, hairColor, isHero = false) {
             const group = new THREE.Group();
 
-            // الجسم / القميص
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(0.8, 1.1, 0.45),
                 new THREE.MeshStandardMaterial({ color: shirtColor })
@@ -173,15 +167,13 @@
             body.position.y = 1.25;
             group.add(body);
 
-            // الرأس
             const head = new THREE.Mesh(
                 new THREE.BoxGeometry(0.5, 0.5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffdbac }) // لون البشرة
+                new THREE.MeshStandardMaterial({ color: 0xffdbac })
             );
             head.position.y = 2.1;
             group.add(head);
 
-            // الشعر
             const hair = new THREE.Mesh(
                 new THREE.BoxGeometry(0.54, 0.2, 0.54),
                 new THREE.MeshStandardMaterial({ color: hairColor })
@@ -189,7 +181,6 @@
             hair.position.set(0, 2.38, 0);
             group.add(hair);
 
-            // العيون
             const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
             const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), eyeMat);
             eyeL.position.set(-0.12, 2.15, 0.26);
@@ -197,7 +188,6 @@
             eyeR.position.set(0.12, 2.15, 0.26);
             group.add(eyeL); group.add(eyeR);
 
-            // الذراع الأيسر والأيمن
             const armGeo = new THREE.BoxGeometry(0.24, 0.9, 0.24);
             const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
             
@@ -215,7 +205,6 @@
             armRGroup.position.set(0.54, 1.7, 0);
             group.add(armRGroup);
 
-            // الرجل اليسرى واليمنى
             const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
             const legMat = new THREE.MeshStandardMaterial({ color: pantsColor });
 
@@ -243,19 +232,15 @@
             };
         }
 
-        // بناء المدينة الكبرى الحقيقية وحدود الخريطة
         function buildMassiveRealisticCity() {
-            // الأرضية والعشب
             const grassGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
             const grassMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.8 });
             const grass = new THREE.Mesh(grassGeo, grassMat);
             grass.rotation.x = -Math.PI / 2;
             scene.add(grass);
 
-            // جدار حد الخريطة المنيع (Invisible & Glowing Border Barrier)
             createMapBoundaries();
 
-            // شبكة الشوارع والتقاطعات الأسفلتية
             for (let i = -MAP_LIMIT + 40; i <= MAP_LIMIT - 40; i += 60) {
                 const roadLong = new THREE.Mesh(
                     new THREE.PlaneGeometry(16, MAP_LIMIT * 2),
@@ -274,14 +259,13 @@
                 scene.add(roadCross);
             }
 
-            // العمارات والمباني بالتفاصيل النوافذ الشفافة والأبواب
             const buildingColors = [0xf8fafc, 0xe2e8f0, 0xfed7aa, 0xddd6fe];
             const storeTypes = [
-                { name: "محل لبيع الملابس", desc: "أحدث الموضات والأزياء العصرية الحصرية." },
-                { name: "محل لبيع الطعام والمأكولات", desc: "أشهى الأطباق السريعة والوجبات الطازجة." },
-                { name: "محل للقراءة والمكتبة", desc: "آلاف الكتب والروايات الهادئة للاسترخاء." },
-                { name: "محل الفواكه الجافة", desc: "أجود أنواع المكسرات والفواكه المجففة الفاخرة." },
-                { name: "ملهى / نادي ليلي (كبريه)", desc: "أضواء ساطعة، موسيقى وأجواء ترفيهية نابضة بالحياة." }
+                { name: "محل لبيع الملابس", desc: "أحدث الموضات والأزياء العصرية الحصرية.", color: 0x3b82f6 },
+                { name: "محل لبيع الطعام والمأكولات", desc: "أشهى الأطباق السريعة والوجبات الطازجة.", color: 0x10b981 },
+                { name: "محل للقراءة والمكتبة", desc: "آلاف الكتب والروايات الهادئة للاسترخاء.", color: 0x8b5cf6 },
+                { name: "محل الفواكه الجافة", desc: "أجود أنواع المكسرات والفواكه المجففة الفاخرة.", color: 0xf59e0b },
+                { name: "ملهى / نادي ليلي (كبريه)", desc: "أضواء ساطعة، موسيقى وأجواء ترفيهية نابضة بالحياة.", color: 0xec4899 }
             ];
 
             let storeIndex = 0;
@@ -293,7 +277,6 @@
                     let bWidth = 24, bDepth = 24, bHeight = 20 + Math.random() * 30;
                     let bColor = buildingColors[Math.floor(Math.random() * buildingColors.length)];
 
-                    // جدار المبنى
                     const bMesh = new THREE.Mesh(
                         new THREE.BoxGeometry(bWidth, bHeight, bDepth),
                         new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.4 })
@@ -301,7 +284,6 @@
                     bMesh.position.set(x + 15, bHeight / 2, z + 15);
                     scene.add(bMesh);
 
-                    // إضافة صندوق التصادم (Bounding Box) للمبنى
                     let box = new THREE.Box3().setFromObject(bMesh);
                     box.expandByScalar(0.6);
                     buildingBoxes.push(box);
@@ -316,7 +298,13 @@
                         radius: 4.5
                     });
 
-                    // باب المبنى
+                    // لوحة المتجر البارزة فوق الباب (Store Signboard)
+                    const signGeo = new THREE.BoxGeometry(8, 2.5, 0.5);
+                    const signMat = new THREE.MeshBasicMaterial({ color: currentStore.color });
+                    const signBoard = new THREE.Mesh(signGeo, signMat);
+                    signBoard.position.set(x + 15, 7.5, z + 15 + bDepth / 2 + 0.2);
+                    scene.add(signBoard);
+
                     const door = new THREE.Mesh(
                         new THREE.BoxGeometry(4, 6, 0.3),
                         new THREE.MeshStandardMaterial({ color: 0x7c2d12 })
@@ -324,7 +312,6 @@
                     door.position.set(x + 15, 3, z + 15 + bDepth / 2 + 0.1);
                     scene.add(door);
 
-                    // نوافذ بلورية شفافة (Glass Windows)
                     const windowMat = new THREE.MeshPhysicalMaterial({ 
                         color: 0x38bdf8, 
                         transparent: true, 
@@ -333,7 +320,7 @@
                         metalness: 0.1
                     });
 
-                    for (let yWin = 10; yWin < bHeight - 4; yWin += 7) {
+                    for (let yWin = 12; yWin < bHeight - 4; yWin += 7) {
                         for (let xWin = -8; xWin <= 8; xWin += 8) {
                             const win = new THREE.Mesh(new THREE.BoxGeometry(3.5, 4, 0.3), windowMat);
                             win.position.set(x + 15 + xWin, yWin, z + 15 + bDepth / 2 + 0.15);
@@ -343,10 +330,10 @@
                 }
             }
 
-            // توليد سكان كثيرين يتجولون في الشوارع (NPCs)
-            for (let i = 0; i < 35; i++) {
-                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+            // توليد سكان حقيقيين (NPCs) يتحركون ويتفادون الاصطدام بالمباني
+            for (let i = 0; i < 25; i++) {
+                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.4);
+                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.4);
                 let npc = createHumanoidCharacter(
                     Math.random() * 0xffffff, 
                     0x1e293b, 
@@ -354,11 +341,14 @@
                 );
                 npc.group.position.set(rx, 0, rz);
                 scene.add(npc.group);
-                npcs.push(npc);
+                
+                npcs.push({
+                    obj: npc,
+                    velocity: new THREE.Vector3(0, 0, (Math.random() > 0.5 ? 1 : -1) * 0.05)
+                });
             }
         }
 
-        // حواجز حدود الخريطة
         function createMapBoundaries() {
             const barrierGeo = new THREE.BoxGeometry(MAP_LIMIT * 2, 25, 2);
             const barrierMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, wireframe: true, transparent: true, opacity: 0.3 });
@@ -399,8 +389,9 @@
                 let dist = Math.sqrt(dx*dx + dy*dy), maxD = 40;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                // عكس اتجاه المحور السيني بناءً على طلبك السابق
-                moveVector.set((-dx)/maxD, dy/maxD);
+                
+                // تعديل الاتجاهات: الأمام والخلف واليمين واليسار تعمل بشكل صحيح تماماً
+                moveVector.set(dx / maxD, -dy / maxD);
             }
 
             let dragging = false, px = 0, py = 0;
@@ -424,13 +415,11 @@
             });
 
             document.getElementById('fire-btn').addEventListener('touchstart', () => {
-                // هجوم وتفعيل حركة الذراع
                 playerObj.armR.rotation.x = -Math.PI / 2;
                 setTimeout(() => playerObj.armR.rotation.x = 0, 200);
             });
         }
 
-        // تحديث أنيميشن وحركة الأرجل والأيدي
         function updateLimbAnimation(charObj, isMoving) {
             if (isMoving) {
                 charObj.walkTimer += 0.2;
@@ -513,10 +502,8 @@
                 playerObj.group.rotation.y = angle;
             }
 
-            // تطبيق أنيميشن الأطراف للبطل
             updateLimbAnimation(playerObj, isMoving);
 
-            // الجاذبية
             playerVelocity.y -= 0.01;
             playerPos.y += playerVelocity.y;
             if (playerPos.y < 0) {
@@ -526,17 +513,31 @@
 
             playerObj.group.position.copy(playerPos);
 
-            // فحص الاقتراب من أبواب المتاجر وعرض نظام الواقع الافتراضي التفاعلي
             checkStoresProximity();
 
-            // تحريك المواطنين أنيميشن وحركة حقيقية
-            npcs.forEach(npc => {
-                npc.group.position.z += 0.04;
-                if (npc.group.position.z > MAP_LIMIT - 10) npc.group.position.z = -MAP_LIMIT + 10;
+            // تحريك المواطنين الواقعيين مع فحص اصطدامهم بالمباني لضمان عدم دخولهم داخل الجدران
+            npcs.forEach(npcData => {
+                let npc = npcData.obj;
+                let nextNpcZ = npc.group.position.z + npcData.velocity.z;
+                
+                let npcTestPos = new THREE.Vector3(npc.group.position.x, 1, nextNpcZ);
+                let hitBuilding = false;
+                for (let box of buildingBoxes) {
+                    if (box.containsPoint(npcTestPos)) {
+                        hitBuilding = true;
+                        break;
+                    }
+                }
+
+                if (!hitBuilding && Math.abs(nextNpcZ) < MAP_LIMIT - 10) {
+                    npc.group.position.z = nextNpcZ;
+                } else {
+                    npcData.velocity.z *= -1; // انعكاس الاتجاه عند الاصطدام بالمبنى كالبشر الحقيقيين
+                }
+
                 updateLimbAnimation(npc, true);
             });
 
-            // الكاميرا تتبع البطل
             let camDistance = 8;
             let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
             let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2;

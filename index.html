@@ -90,7 +90,7 @@
         let camYaw = 0, camPitch = 0.3;
         let npcs = [];
         let walkCycle = 0;
-        let buildingBoxes = []; // مصفوفة لتخزين حوادث الاصطدام مع المباني
+        let buildingBoxes = [];
 
         const MAP_LIMIT = 240; // حدود الخريطة والمدينة الكبيرة
 
@@ -262,9 +262,9 @@
                     bMesh.position.set(x + 15, bHeight / 2, z + 15);
                     scene.add(bMesh);
 
-                    // إضافة صندوق الاصطدام الخاص بالمبنى لمنع الاختراق
+                    // صندوق الاصطدام للمبنى
                     let box = new THREE.Box3().setFromObject(bMesh);
-                    box.expandByScalar(0.6); // هامش سلامة طفيف لمنع الالتصاق الكامل
+                    box.expandByScalar(0.6);
                     buildingBoxes.push(box);
 
                     // باب المبنى
@@ -350,7 +350,8 @@
                 let dist = Math.sqrt(dx*dx + dy*dy), maxD = 40;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                moveVector.set(dx/maxD, dy/maxD);
+                // تم عكس اتجاه المحور السيني هنا لتتوافق الحركة تماماً
+                moveVector.set((-dx)/maxD, dy/maxD);
             }
 
             let dragging = false, px = 0, py = 0;
@@ -410,7 +411,7 @@
                 let nextX = playerPos.x + moveDir.x * speed;
                 let nextZ = playerPos.z + moveDir.z * speed;
 
-                // التثبت من الاصطدام مع جدران المباني قبل تغيير موقع X
+                // التحقق من اصطدام المحور السيني X
                 let testX = new THREE.Vector3(nextX, playerPos.y + 0.9, playerPos.z);
                 let canMoveX = true;
                 for (let box of buildingBoxes) {
@@ -421,7 +422,7 @@
                 }
                 if (canMoveX && Math.abs(nextX) < MAP_LIMIT - 3) playerPos.x = nextX;
 
-                // التثبت من الاصطدام مع جدران المباني قبل تغيير موقع Z
+                // التحقق من اصطدام المحور العيني Z
                 let testZ = new THREE.Vector3(playerPos.x, playerPos.y + 0.9, nextZ);
                 let canMoveZ = true;
                 for (let box of buildingBoxes) {

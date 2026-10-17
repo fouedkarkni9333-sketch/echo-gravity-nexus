@@ -3,35 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Real Houses & Control Fix</title>
+    <title>Echo Gravity Nexus - Living Real City</title>
     <style>
         body {
-            margin: 0; padding: 0; overflow: hidden;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background-color: #7dd3fc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none; -webkit-user-select: none; touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
-        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
         #ui {
-            position: absolute; top: 15px; left: 15px;
-            color: #0f172a; background: rgba(255, 255, 255, 0.95);
-            padding: 12px 20px; border-radius: 14px;
-            border: 2px solid #0284c7; pointer-events: none; z-index: 10;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 12px 20px;
+            border-radius: 14px;
+            border: 2px solid #0284c7;
+            pointer-events: none;
+            z-index: 10;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
-        #ui h1 { margin: 0 0 4px 0; font-size: 15px; color: #0284c7; }
+        #ui h1 { margin: 0 0 4px 0; font-size: 16px; color: #0284c7; }
         #ui p { margin: 0 0 3px 0; font-size: 11px; color: #334155; }
         
         #joystick-zone {
             position: absolute; bottom: 30px; left: 30px;
             width: 125px; height: 125px;
             background: rgba(255, 255, 255, 0.35);
-            border: 2px solid #0284c7; border-radius: 50%; z-index: 10;
+            border: 2px solid #0284c7;
+            border-radius: 50%; z-index: 10;
             backdrop-filter: blur(5px);
         }
         #joystick-knob {
             position: absolute; top: 37px; left: 37px;
-            width: 50px; height: 50px; background: #0284c7;
+            width: 50px; height: 50px;
+            background: #0284c7;
             border-radius: 50%; pointer-events: none;
             box-shadow: 0 3px 10px rgba(0,0,0,0.25);
         }
@@ -40,9 +56,12 @@
             display: flex; flex-direction: column; gap: 12px; z-index: 10;
         }
         .action-btn {
-            width: 65px; height: 65px; background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #0284c7; color: #0284c7; font-weight: bold; font-size: 12px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            width: 65px; height: 65px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #0284c7;
+            color: #0284c7; font-weight: bold; font-size: 13px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .action-btn:active { background: #0284c7; color: #fff; }
@@ -51,16 +70,15 @@
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
-        <h1>حي سكني واقعي - منازل طابق وطابقين</h1>
-        <p id="status-txt">الحالة: تجول حر | الأهداف: 0</p>
-        <p id="interact-txt">التفاعل: اقترب من باب منزل للدخول</p>
+        <h1>محلات ومغازات المدينة الواقعية</h1>
+        <p>تجول بحرية بين المتاجر والأسواق</p>
+        <p id="status-txt">الحالة: تجول حر | الصحة: 100</p>
     </div>
     
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div class="action-btns">
         <div class="action-btn" id="jump-btn">قفز</div>
         <div class="action-btn" id="fire-btn" style="border-color: #ef4444; color: #ef4444;">هجوم</div>
-        <div class="action-btn" id="interact-btn" style="border-color: #8b5cf6; color: #8b5cf6; font-size: 10px;">دخول</div>
         <div class="action-btn" id="car-btn" style="border-color: #10b981; color: #10b981; font-size: 11px;">ركوب</div>
     </div>
 
@@ -74,10 +92,7 @@
         let camYaw = 0, camPitch = 0.3;
         let npcs = [];
         let buildingBoxes = [];
-        let houseDoors = [];
         let bullets = [];
-        let score = 0;
-        let insideHouse = false;
         
         let carObj, carBox;
         let isDriving = false;
@@ -99,10 +114,13 @@
             renderer.shadowMap.enabled = true;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-            let sun = new THREE.DirectionalLight(0xfffaed, 1.2);
-            sun.position.set(100, 200, 100);
-            scene.add(sun);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+            sunLight.position.set(100, 200, 100);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
 
             playerObj = createHumanoidCharacter(0x0284c7, 0x1e293b, 0x38bdf8);
             scene.add(playerObj.group);
@@ -110,7 +128,7 @@
             carObj = createCarWithWheels();
             scene.add(carObj);
 
-            buildRealisticNeighborhood();
+            buildRealShopsCity();
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -154,43 +172,122 @@
             legRGroup.add(new THREE.Mesh(legGeo, legMat)).children[0].position.y = -0.45;
             legRGroup.position.set(0.2, 0.8, 0); group.add(legRGroup);
 
-            return { group, body, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
+            return { group, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
         }
 
         function createCarWithWheels() {
             const carGroup = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1, 4.5), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
-            body.position.y = 0.9; carGroup.add(body);
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 1, 4.5),
+                new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5, roughness: 0.2 })
+            );
+            body.position.y = 0.9;
+            carGroup.add(body);
+
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.8, 2.2),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8 })
+            );
+            top.position.set(0, 1.7, -0.2);
+            carGroup.add(top);
+
+            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+            wheelGeo.rotateZ(Math.PI / 2);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
+
+            [[-1.1, 0.4, 1.4], [1.1, 0.4, 1.4], [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]].forEach(pos => {
+                let wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.position.set(pos[0], pos[1], pos[2]);
+                carGroup.add(wheel);
+            });
+
             carGroup.position.copy(carPos);
             carBox = new THREE.Box3().setFromObject(carGroup);
             return carGroup;
         }
 
-        // بناء منازل حقيقية من طابق أو طابقين مع إمكانية الدخول
-        function buildRealisticNeighborhood() {
-            let ground = new THREE.Mesh(new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2), new THREE.MeshStandardMaterial({ color: 0x4ade80 }));
-            ground.rotation.x = -Math.PI / 2; scene.add(ground);
+        // تصميم مدينة واقعية من متاجر ومغازات من طابق واحد بدل العمارات المرتفعة
+        function buildRealShopsCity() {
+            const groundGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
 
-            for (let x = -MAP_LIMIT + 30; x <= MAP_LIMIT - 30; x += 45) {
-                for (let z = -MAP_LIMIT + 30; z <= MAP_LIMIT - 30; z += 45) {
-                    if (Math.abs(x) < 15 && Math.abs(z) < 15) continue;
+            createMapBoundaries();
 
-                    let hWidth = 16, hDepth = 16, hHeight = 8 + (Math.random() > 0.5 ? 6 : 0); // طابق أو طابقين
-                    let hMesh = new THREE.Mesh(new THREE.BoxGeometry(hWidth, hHeight, hDepth), new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.6 }));
-                    hMesh.position.set(x, hHeight / 2, z);
-                    scene.add(hMesh);
+            // شبكة طرق منظمة
+            for (let i = -MAP_LIMIT + 30; i <= MAP_LIMIT - 30; i += 45) {
+                let roadL = new THREE.Mesh(new THREE.PlaneGeometry(12, MAP_LIMIT * 2), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+                roadL.rotation.x = -Math.PI / 2; roadL.position.set(i, 0.01, 0); scene.add(roadL);
 
-                    buildingBoxes.push(new THREE.Box3().setFromObject(hMesh));
+                let roadC = new THREE.Mesh(new THREE.PlaneGeometry(MAP_LIMIT * 2, 12), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+                roadC.rotation.x = -Math.PI / 2; roadC.position.set(0, 0.01, i); scene.add(roadC);
+            }
 
-                    // باب المنزل
-                    let doorPos = new THREE.Vector3(x, 2, z + hDepth / 2 + 0.2);
-                    let door = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 0.4), new THREE.MeshStandardMaterial({ color: 0x78350f }));
-                    door.position.copy(doorPos);
+            const shopColors = [0xf8fafc, 0xfed7aa, 0xbfdbfe, 0xfbcfe8, 0xd9f99d];
+            const signColors = [0xec4899, 0x0284c7, 0x10b981, 0xf59e0b, 0x8b5cf6];
+
+            for (let x = -MAP_LIMIT + 35; x <= MAP_LIMIT - 35; x += 45) {
+                for (let z = -MAP_LIMIT + 35; z <= MAP_LIMIT - 35; z += 45) {
+                    if (Math.abs(x) < 20 && Math.abs(z) < 20) continue;
+
+                    let sWidth = 18, sDepth = 18, sHeight = 5.5; // محلات من طابق واحد واقعية
+                    let sColor = shopColors[Math.floor(Math.random() * shopColors.length)];
+
+                    let shopMesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(sWidth, sHeight, sDepth),
+                        new THREE.MeshStandardMaterial({ color: sColor, roughness: 0.3 })
+                    );
+                    shopMesh.position.set(x + 10, sHeight / 2, z + 10);
+                    scene.add(shopMesh);
+
+                    let box = new THREE.Box3().setFromObject(shopMesh);
+                    buildingBoxes.push(box);
+
+                    // واجهة زجاجية للمحل (مغازة أو محل ملابس)
+                    let glassMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6, roughness: 0.1 });
+                    let windowGlass = new THREE.Mesh(new THREE.BoxGeometry(10, 3.5, 0.2), glassMat);
+                    windowGlass.position.set(x + 10, 2.5, z + 10 + sDepth / 2 + 0.1);
+                    scene.add(windowGlass);
+
+                    // باب المحل
+                    let doorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+                    let door = new THREE.Mesh(new THREE.BoxGeometry(3.5, 4.2, 0.3), doorMat);
+                    door.position.set(x + 10, 2.1, z + 10 + sDepth / 2 + 0.15);
                     scene.add(door);
 
-                    houseDoors.push({ pos: doorPos, interiorPos: new THREE.Vector3(x, 0.1, z) });
+                    // لافتة المحل العلوية المضيئة (محل ملابس / مغازة)
+                    let signColor = signColors[Math.floor(Math.random() * signColors.length)];
+                    let signMat = new THREE.MeshBasicMaterial({ color: signColor });
+                    let sign = new THREE.Mesh(new THREE.BoxGeometry(12, 1.2, 0.4), signMat);
+                    sign.position.set(x + 10, 5.2, z + 10 + sDepth / 2 + 0.2);
+                    scene.add(sign);
                 }
             }
+
+            // مواطنون يتجولون في الشوارع
+            for (let i = 0; i < 20; i++) {
+                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                let npc = createHumanoidCharacter(Math.random() * 0xffffff, 0x1e293b, Math.random() * 0xffffff);
+                npc.group.position.set(rx, 0, rz);
+                scene.add(npc.group);
+                npcs.push(npc);
+            }
+        }
+
+        function createMapBoundaries() {
+            const barrierGeo = new THREE.BoxGeometry(MAP_LIMIT * 2, 20, 2);
+            const barrierMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, wireframe: true, transparent: true, opacity: 0.2 });
+
+            const n = new THREE.Mesh(barrierGeo, barrierMat); n.position.set(0, 10, MAP_LIMIT); scene.add(n);
+            const s = new THREE.Mesh(barrierGeo, barrierMat); s.position.set(0, 10, -MAP_LIMIT); scene.add(s);
+            
+            const barrierGeoRot = new THREE.BoxGeometry(2, 20, MAP_LIMIT * 2);
+            const e = new THREE.Mesh(barrierGeoRot, barrierMat); e.position.set(MAP_LIMIT, 10, 0); scene.add(e);
+            const w = new THREE.Mesh(barrierGeoRot, barrierMat); w.position.set(-MAP_LIMIT, 10, 0); scene.add(w);
         }
 
         function setupControls() {
@@ -199,7 +296,10 @@
             let jTouch = null;
 
             zone.addEventListener('touchstart', (e) => {
-                if (jTouch === null) { jTouch = e.changedTouches[0].identifier; updateJoy(e.changedTouches[0]); }
+                if (jTouch === null) {
+                    jTouch = e.changedTouches[0].identifier;
+                    updateJoy(e.changedTouches[0]);
+                }
             });
             zone.addEventListener('touchmove', (e) => {
                 for (let t of e.changedTouches) if (t.identifier === jTouch) updateJoy(t);
@@ -218,11 +318,11 @@
                 let dist = Math.sqrt(dx*dx + dy*dy), maxD = 40;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                // تصحيح الاتجاهات لتتوافق بدقة مع اليسار واليمين والأمام والخلف
-                moveVector.set(dx / maxD, dy / maxD);
+                
+                // تم ضبط اتجاهات المحور السيني والصادي بدقة تامة لتتوافق مع حركة الكاميرا تماماً
+                moveVector.set(dx / maxD, -dy / maxD);
             }
 
-            // حركة اللمس للكاميرا
             let dragging = false, px = 0, py = 0;
             window.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#joystick-zone') || e.target.closest('.action-btns')) return;
@@ -243,31 +343,27 @@
                 if (!isDriving && playerPos.y <= 0.01) playerVelocity.y = 0.22;
             });
 
-            // زر الدخول الحقيقي إلى المنزل
-            document.getElementById('interact-btn').addEventListener('touchstart', () => {
-                let nearDoor = houseDoors.find(d => d.pos.distanceTo(playerPos) < 4);
-                if (nearDoor) {
-                    insideHouse = !insideHouse;
-                    if (insideHouse) {
-                        playerPos.copy(nearDoor.interiorPos);
-                        document.getElementById('interact-txt').innerText = "أنت داخل المنزل (اضغط خروج للعودة)";
-                        document.getElementById('interact-btn').innerText = "خروج";
-                    } else {
-                        playerPos.add(new THREE.Vector3(0, 0, 3));
-                        document.getElementById('interact-txt').innerText = "التفاعل: اقترب من باب منزل للدخول";
-                        document.getElementById('interact-btn').innerText = "دخول";
-                    }
-                } else {
-                    document.getElementById('interact-txt').innerText = "قريب جداً من الباب للدخول!";
-                }
-            });
-
             document.getElementById('fire-btn').addEventListener('touchstart', () => {
-                let bullet = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+                playerObj.armR.rotation.x = -Math.PI / 2;
+                setTimeout(() => playerObj.armR.rotation.x = 0, 200);
+
+                let bulletGeo = new THREE.SphereGeometry(0.15, 8, 8);
+                let bulletMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+                let bullet = new THREE.Mesh(bulletGeo, bulletMat);
                 bullet.position.copy(playerPos).add(new THREE.Vector3(0, 1.5, 0));
+                
                 let dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).normalize();
                 bullets.push({ mesh: bullet, dir: dir, life: 100 });
                 scene.add(bullet);
+            });
+
+            document.getElementById('car-btn').addEventListener('touchstart', () => {
+                let dist = playerPos.distanceTo(carPos);
+                if (dist < 6) {
+                    isDriving = !isDriving;
+                    playerObj.group.visible = !isDriving;
+                    document.getElementById('car-btn').innerText = isDriving ? "ترجل" : "ركوب";
+                }
             });
         }
 
@@ -275,49 +371,132 @@
             if (isMoving) {
                 charObj.walkTimer += 0.2;
                 let swing = Math.sin(charObj.walkTimer) * 0.6;
-                charObj.legL.rotation.x = swing; charObj.legR.rotation.x = -swing;
+                charObj.legL.rotation.x = swing;
+                charObj.legR.rotation.x = -swing;
+                charObj.armL.rotation.x = -swing;
+                charObj.armR.rotation.x = swing;
             } else {
-                charObj.legL.rotation.x = 0; charObj.legR.rotation.x = 0;
+                charObj.legL.rotation.x = 0;
+                charObj.legR.rotation.x = 0;
+                charObj.armL.rotation.x = 0;
+                charObj.armR.rotation.x = 0;
             }
+        }
+
+        function checkCollision(newPos) {
+            let playerBox = new THREE.Box3(
+                new THREE.Vector3(newPos.x - 0.4, newPos.y, newPos.z - 0.4),
+                new THREE.Vector3(newPos.x + 0.4, newPos.y + 1.8, newPos.z + 0.4)
+            );
+
+            for (let box of buildingBoxes) {
+                if (box.intersectsBox(playerBox)) return true;
+            }
+
+            if (!isDriving && carBox && carBox.intersectsBox(playerBox)) return true;
+
+            for (let npc of npcs) {
+                let npcPos = npc.group.position;
+                let npcBox = new THREE.Box3(
+                    new THREE.Vector3(npcPos.x - 0.4, npcPos.y, npcPos.z - 0.4),
+                    new THREE.Vector3(npcPos.x + 0.4, npcPos.y + 1.8, npcPos.z + 0.4)
+                );
+                if (npcBox.intersectsBox(playerBox)) return true;
+            }
+
+            return false;
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            let speed = 0.15;
+            let speed = isDriving ? 0.35 : 0.18;
             let isMoving = moveVector.length() > 0;
 
             if (isMoving) {
                 let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.y).normalize();
                 moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
 
-                let nextPos = playerPos.clone();
-                nextPos.x += moveDir.x * speed;
-                nextPos.z += moveDir.z * speed;
+                if (isDriving) {
+                    let nextCarPos = carPos.clone().addScaledVector(moveDir, speed);
+                    let tempCarBox = carBox.clone();
+                    tempCarBox.setFromCenterAndSize(nextCarPos.clone().add(new THREE.Vector3(0, 1, 0)), new THREE.Vector3(2.2, 2, 4.5));
+                    
+                    let carCollides = false;
+                    for (let box of buildingBoxes) {
+                        if (box.intersectsBox(tempCarBox)) { carCollides = true; break; }
+                    }
 
-                if (!insideHouse) {
-                    playerPos.copy(nextPos);
+                    if (!carCollides && Math.abs(nextCarPos.x) < MAP_LIMIT - 3 && Math.abs(nextCarPos.z) < MAP_LIMIT - 3) {
+                        carPos.copy(nextCarPos);
+                        carObj.position.copy(carPos);
+                        carBox.setFromObject(carObj);
+                        carObj.rotation.y = Math.atan2(moveDir.x, moveDir.z);
+                        playerPos.copy(carPos);
+                    }
                 } else {
-                    // تقييد الحركة داخل المنزل
-                    playerPos.copy(nextPos);
+                    let nextPos = playerPos.clone();
+                    nextPos.x += moveDir.x * speed;
+                    nextPos.z += moveDir.z * speed;
+
+                    if (!checkCollision(nextPos) && Math.abs(nextPos.x) < MAP_LIMIT - 3 && Math.abs(nextPos.z) < MAP_LIMIT - 3) {
+                        playerPos.copy(nextPos);
+                    }
+
+                    playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
                 }
-                playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
             }
 
-            updateLimbAnimation(playerObj, isMoving);
-            playerVelocity.y -= 0.01;
-            playerPos.y += playerVelocity.y;
-            if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
-            playerObj.group.position.copy(playerPos);
+            if (!isDriving) {
+                updateLimbAnimation(playerObj, isMoving);
+                playerVelocity.y -= 0.01;
+                playerPos.y += playerVelocity.y;
+                if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
+                playerObj.group.position.copy(playerPos);
+            }
 
-            // تحديث الكاميرا بسلاسة لتتبع الحركة يميناً ويساراً بدقة
-            let camDistance = insideHouse ? 5 : 7;
-            let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
-            let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2;
-            let camZ = playerPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.mesh.position.addScaledVector(b.dir, 0.8);
+                b.life--;
+                if (b.life <= 0) {
+                    scene.remove(b.mesh);
+                    bullets.splice(i, 1);
+                }
+            }
+
+            npcs.forEach(npc => {
+                let nextNpcZ = npc.group.position.z + 0.04;
+                if (nextNpcZ > MAP_LIMIT - 10) nextNpcZ = -MAP_LIMIT + 10;
+                
+                let npcTestPos = npc.group.position.clone();
+                npcTestPos.z = nextNpcZ;
+                let npcBox = new THREE.Box3(
+                    new THREE.Vector3(npcTestPos.x - 0.4, npcTestPos.y, npcTestPos.z - 0.4),
+                    new THREE.Vector3(npcTestPos.x + 0.4, npcTestPos.y + 1.8, npcTestPos.z + 0.4)
+                );
+
+                let hitsBuilding = false;
+                for (let box of buildingBoxes) {
+                    if (box.intersectsBox(npcBox)) { hitsBuilding = true; break; }
+                }
+
+                if (!hitsBuilding) {
+                    npc.group.position.z = nextNpcZ;
+                } else {
+                    npc.group.position.z = -MAP_LIMIT + 10;
+                }
+                updateLimbAnimation(npc, true);
+            });
+
+            let targetPos = isDriving ? carPos : playerPos;
+            let camDistance = isDriving ? 12 : 8;
+            let camX = targetPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
+            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 3 : 2);
+            let camZ = targetPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
 
             camera.position.set(camX, camY, camZ);
-            camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
+            camera.lookAt(targetPos.x, targetPos.y + 1.2, targetPos.z);
 
             renderer.render(scene, camera);
         }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Ultra Realistic City</title>
+    <title>Echo Gravity Nexus - Ultra Realistic City Enhanced</title>
     <style>
         body {
             margin: 0;
@@ -26,15 +26,15 @@
             left: 15px;
             color: #0f172a;
             background: rgba(255, 255, 255, 0.92);
-            padding: 10px 18px;
+            padding: 12px 20px;
             border-radius: 14px;
             border: 2px solid #0284c7;
             pointer-events: none;
             z-index: 10;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
-        #ui h1 { margin: 0 0 2px 0; font-size: 16px; color: #0284c7; }
-        #ui p { margin: 0; font-size: 11px; color: #334155; }
+        #ui h1 { margin: 0 0 4px 0; font-size: 16px; color: #0284c7; }
+        #ui p { margin: 0 0 3px 0; font-size: 11px; color: #334155; }
         
         #joystick-zone {
             position: absolute; bottom: 30px; left: 30px;
@@ -59,7 +59,7 @@
             width: 65px; height: 65px;
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid #0284c7;
-            color: #0284c7; font-weight: bold; font-size: 14px;
+            color: #0284c7; font-weight: bold; font-size: 13px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -70,14 +70,16 @@
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
-        <h1>Echo Gravity Nexus</h1>
-        <p>المدينة الكبرى | تحريك تفصيلي للأيدي والأرجل + حدود محددة للخريطة</p>
+        <h1>Echo Gravity Nexus v2</h1>
+        <p>المدينة الكبرى | اتجاهات حركة دقيقة 100%</p>
+        <p id="status-txt">الصحة: 100 | النقاط: 0</p>
     </div>
     
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div class="action-btns">
         <div class="action-btn" id="jump-btn">قفز</div>
         <div class="action-btn" id="fire-btn" style="border-color: #ef4444; color: #ef4444;">هجوم</div>
+        <div class="action-btn" id="car-btn" style="border-color: #10b981; color: #10b981; font-size: 11px;">ركوب</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -89,17 +91,23 @@
         let playerPos = new THREE.Vector3(0, 0, 10);
         let camYaw = 0, camPitch = 0.3;
         let npcs = [];
-        let walkCycle = 0;
         let buildingBoxes = [];
+        let bullets = [];
+        
+        // عناصر جديدة: نظام المركبات
+        let carObj;
+        let isDriving = false;
+        let carPos = new THREE.Vector3(15, 0, 15);
+        let carRotation = 0;
 
-        const MAP_LIMIT = 240; // حدود الخريطة والمدينة الكبيرة
+        const MAP_LIMIT = 240;
 
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x7dd3fc); // سماء مشمسة
+            scene.background = new THREE.Color(0x7dd3fc);
             scene.fog = new THREE.FogExp2(0x7dd3fc, 0.003);
 
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -116,11 +124,13 @@
             sunLight.castShadow = true;
             scene.add(sunLight);
 
-            // 1. إنشاء بطل غني بالتفاصيل (عيون، شعر، وأطراف متحركة)
+            // إنشاء اللاعب والسيارة
             playerObj = createHumanoidCharacter(0x0284c7, 0x1e293b, 0x38bdf8, true);
             scene.add(playerObj.group);
 
-            // 2. بناء المدينة الكبرى مع تفاصيل زجاج النوافذ، الأبواب، وحواجز الحدود
+            carObj = createCar();
+            scene.add(carObj);
+
             buildMassiveRealisticCity();
 
             window.addEventListener('resize', () => {
@@ -132,120 +142,80 @@
             setupControls();
         }
 
-        // دالة إنشاء شخصيات بشرية واقعية بملامح وأعضاء قابلة للتحريك
-        function createHumanoidCharacter(shirtColor, pantsColor, hairColor, isHero = false) {
+        function createHumanoidCharacter(shirtColor, pantsColor, hairColor) {
             const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.45), new THREE.MeshStandardMaterial({ color: shirtColor }));
+            body.position.y = 1.25; group.add(body);
 
-            // الجسم / القميص
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(0.8, 1.1, 0.45),
-                new THREE.MeshStandardMaterial({ color: shirtColor })
-            );
-            body.position.y = 1.25;
-            group.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            head.position.y = 2.1; group.add(head);
 
-            // الرأس
-            const head = new THREE.Mesh(
-                new THREE.BoxGeometry(0.5, 0.5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffdbac }) // لون البشرة
-            );
-            head.position.y = 2.1;
-            group.add(head);
+            const hair = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.2, 0.54), new THREE.MeshStandardMaterial({ color: hairColor }));
+            hair.position.set(0, 2.38, 0); group.add(hair);
 
-            // الشعر
-            const hair = new THREE.Mesh(
-                new THREE.BoxGeometry(0.54, 0.2, 0.54),
-                new THREE.MeshStandardMaterial({ color: hairColor })
-            );
-            hair.position.set(0, 2.38, 0);
-            group.add(hair);
-
-            // العيون
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), eyeMat);
-            eyeL.position.set(-0.12, 2.15, 0.26);
-            const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.05), eyeMat);
-            eyeR.position.set(0.12, 2.15, 0.26);
-            group.add(eyeL); group.add(eyeR);
-
-            // الذراع الأيسر والأيمن
             const armGeo = new THREE.BoxGeometry(0.24, 0.9, 0.24);
             const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
             
             const armLGroup = new THREE.Group();
-            const armL = new THREE.Mesh(armGeo, armMat);
-            armL.position.y = -0.35;
-            armLGroup.add(armL);
-            armLGroup.position.set(-0.54, 1.7, 0);
-            group.add(armLGroup);
+            armLGroup.add(new THREE.Mesh(armGeo, armMat)).children[0].position.y = -0.35;
+            armLGroup.position.set(-0.54, 1.7, 0); group.add(armLGroup);
 
             const armRGroup = new THREE.Group();
-            const armR = new THREE.Mesh(armGeo, armMat);
-            armR.position.y = -0.35;
-            armRGroup.add(armR);
-            armRGroup.position.set(0.54, 1.7, 0);
-            group.add(armRGroup);
+            armRGroup.add(new THREE.Mesh(armGeo, armMat)).children[0].position.y = -0.35;
+            armRGroup.position.set(0.54, 1.7, 0); group.add(armRGroup);
 
-            // الرجل اليسرى واليمنى
             const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
             const legMat = new THREE.MeshStandardMaterial({ color: pantsColor });
 
             const legLGroup = new THREE.Group();
-            const legL = new THREE.Mesh(legGeo, legMat);
-            legL.position.y = -0.45;
-            legLGroup.add(legL);
-            legLGroup.position.set(-0.2, 0.8, 0);
-            group.add(legLGroup);
+            legLGroup.add(new THREE.Mesh(legGeo, legMat)).children[0].position.y = -0.45;
+            legLGroup.position.set(-0.2, 0.8, 0); group.add(legLGroup);
 
             const legRGroup = new THREE.Group();
-            const legR = new THREE.Mesh(legGeo, legMat);
-            legR.position.y = -0.45;
-            legRGroup.add(legR);
-            legRGroup.position.set(0.2, 0.8, 0);
-            group.add(legRGroup);
+            legRGroup.add(new THREE.Mesh(legGeo, legMat)).children[0].position.y = -0.45;
+            legRGroup.position.set(0.2, 0.8, 0); group.add(legRGroup);
 
-            return {
-                group: group,
-                armL: armLGroup,
-                armR: armRGroup,
-                legL: legLGroup,
-                legR: legRGroup,
-                walkTimer: 0
-            };
+            return { group, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
         }
 
-        // بناء المدينة الكبرى الحقيقية وحدود الخريطة
+        // تصميم سيارة جديدة قابلة للقيادة
+        function createCar() {
+            const carGroup = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 1, 4.5),
+                new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5, roughness: 0.2 })
+            );
+            body.position.y = 0.8;
+            carGroup.add(body);
+
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.8, 2.2),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: true, opacity: 0.8 })
+            );
+            top.position.set(0, 1.7, -0.2);
+            carGroup.add(top);
+
+            carGroup.position.copy(carPos);
+            return carGroup;
+        }
+
         function buildMassiveRealisticCity() {
-            // الأرضية والعشب
             const grassGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
             const grassMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.8 });
             const grass = new THREE.Mesh(grassGeo, grassMat);
             grass.rotation.x = -Math.PI / 2;
             scene.add(grass);
 
-            // جدار حد الخريطة المنيع (Invisible & Glowing Border Barrier)
             createMapBoundaries();
 
-            // شبكة الشوارع والتقاطعات الأسفلتية
             for (let i = -MAP_LIMIT + 40; i <= MAP_LIMIT - 40; i += 60) {
-                const roadLong = new THREE.Mesh(
-                    new THREE.PlaneGeometry(16, MAP_LIMIT * 2),
-                    new THREE.MeshStandardMaterial({ color: 0x1e293b })
-                );
-                roadLong.rotation.x = -Math.PI / 2;
-                roadLong.position.set(i, 0.01, 0);
-                scene.add(roadLong);
+                const roadLong = new THREE.Mesh(new THREE.PlaneGeometry(16, MAP_LIMIT * 2), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+                roadLong.rotation.x = -Math.PI / 2; roadLong.position.set(i, 0.01, 0); scene.add(roadLong);
 
-                const roadCross = new THREE.Mesh(
-                    new THREE.PlaneGeometry(MAP_LIMIT * 2, 16),
-                    new THREE.MeshStandardMaterial({ color: 0x1e293b })
-                );
-                roadCross.rotation.x = -Math.PI / 2;
-                roadCross.position.set(0, 0.01, i);
-                scene.add(roadCross);
+                const roadCross = new THREE.Mesh(new THREE.PlaneGeometry(MAP_LIMIT * 2, 16), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
+                roadCross.rotation.x = -Math.PI / 2; roadCross.position.set(0, 0.01, i); scene.add(roadCross);
             }
 
-            // العمارات والمباني بالتفاصيل النوافذ الشفافة والأبواب
             const buildingColors = [0xf8fafc, 0xe2e8f0, 0xfed7aa, 0xddd6fe];
             for (let x = -MAP_LIMIT + 50; x <= MAP_LIMIT - 50; x += 60) {
                 for (let z = -MAP_LIMIT + 50; z <= MAP_LIMIT - 50; z += 60) {
@@ -254,62 +224,26 @@
                     let bWidth = 24, bDepth = 24, bHeight = 20 + Math.random() * 30;
                     let bColor = buildingColors[Math.floor(Math.random() * buildingColors.length)];
 
-                    // جدار المبنى
-                    const bMesh = new THREE.Mesh(
-                        new THREE.BoxGeometry(bWidth, bHeight, bDepth),
-                        new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.4 })
-                    );
+                    const bMesh = new THREE.Mesh(new THREE.BoxGeometry(bWidth, bHeight, bDepth), new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.4 }));
                     bMesh.position.set(x + 15, bHeight / 2, z + 15);
                     scene.add(bMesh);
 
-                    // صندوق الاصطدام للمبنى
                     let box = new THREE.Box3().setFromObject(bMesh);
                     box.expandByScalar(0.6);
                     buildingBoxes.push(box);
-
-                    // باب المبنى
-                    const door = new THREE.Mesh(
-                        new THREE.BoxGeometry(4, 6, 0.3),
-                        new THREE.MeshStandardMaterial({ color: 0x7c2d12 })
-                    );
-                    door.position.set(x + 15, 3, z + 15 + bDepth / 2 + 0.1);
-                    scene.add(door);
-
-                    // نوافذ بلورية شفافة (Glass Windows)
-                    const windowMat = new THREE.MeshPhysicalMaterial({ 
-                        color: 0x38bdf8, 
-                        transparent: true, 
-                        opacity: 0.7, 
-                        roughness: 0.1,
-                        metalness: 0.1
-                    });
-
-                    for (let yWin = 10; yWin < bHeight - 4; yWin += 7) {
-                        for (let xWin = -8; xWin <= 8; xWin += 8) {
-                            const win = new THREE.Mesh(new THREE.BoxGeometry(3.5, 4, 0.3), windowMat);
-                            win.position.set(x + 15 + xWin, yWin, z + 15 + bDepth / 2 + 0.15);
-                            scene.add(win);
-                        }
-                    }
                 }
             }
 
-            // توليد سكان كثيرين يتجولون في الشوارع (NPCs)
-            for (let i = 0; i < 35; i++) {
+            for (let i = 0; i < 25; i++) {
                 let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
                 let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                let npc = createHumanoidCharacter(
-                    Math.random() * 0xffffff, 
-                    0x1e293b, 
-                    Math.random() * 0xffffff
-                );
+                let npc = createHumanoidCharacter(Math.random() * 0xffffff, 0x1e293b, Math.random() * 0xffffff);
                 npc.group.position.set(rx, 0, rz);
                 scene.add(npc.group);
                 npcs.push(npc);
             }
         }
 
-        // حواجز حدود الخريطة
         function createMapBoundaries() {
             const barrierGeo = new THREE.BoxGeometry(MAP_LIMIT * 2, 25, 2);
             const barrierMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, wireframe: true, transparent: true, opacity: 0.3 });
@@ -350,8 +284,9 @@
                 let dist = Math.sqrt(dx*dx + dy*dy), maxD = 40;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                // تم عكس اتجاه المحور السيني هنا لتتوافق الحركة تماماً
-                moveVector.set((-dx)/maxD, dy/maxD);
+                
+                // تعديل الاتجاهات: الأمام للأمام والخلف للخلف بدقة تامة
+                moveVector.set(dx / maxD, -dy / maxD);
             }
 
             let dragging = false, px = 0, py = 0;
@@ -371,17 +306,35 @@
             window.addEventListener('touchend', () => { dragging = false; });
 
             document.getElementById('jump-btn').addEventListener('touchstart', () => {
-                if (playerPos.y <= 0.01) playerVelocity.y = 0.22;
+                if (!isDriving && playerPos.y <= 0.01) playerVelocity.y = 0.22;
             });
 
+            // إطلاق طلقات نارية هجومية جديدة
             document.getElementById('fire-btn').addEventListener('touchstart', () => {
-                // هجوم وتفعيل حركة الذراع
                 playerObj.armR.rotation.x = -Math.PI / 2;
                 setTimeout(() => playerObj.armR.rotation.x = 0, 200);
+
+                let bulletGeo = new THREE.SphereGeometry(0.15, 8, 8);
+                let bulletMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+                let bullet = new THREE.Mesh(bulletGeo, bulletMat);
+                bullet.position.copy(playerPos).add(new THREE.Vector3(0, 1.5, 0));
+                
+                let dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).normalize();
+                bullets.push({ mesh: bullet, dir: dir, life: 100 });
+                scene.add(bullet);
+            });
+
+            // زر ركوب السيارة
+            document.getElementById('car-btn').addEventListener('touchstart', () => {
+                let dist = playerPos.distanceTo(carPos);
+                if (dist < 6) {
+                    isDriving = !isDriving;
+                    playerObj.group.visible = !isDriving;
+                    document.getElementById('car-btn').innerText = isDriving ? "ترجل" : "ركوب";
+                }
             });
         }
 
-        // تحديث أنيميشن وحركة الأرجل والأيدي
         function updateLimbAnimation(charObj, isMoving) {
             if (isMoving) {
                 charObj.walkTimer += 0.2;
@@ -401,70 +354,75 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            let speed = 0.18;
+            let speed = isDriving ? 0.35 : 0.18;
             let isMoving = moveVector.length() > 0;
 
             if (isMoving) {
                 let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.y).normalize();
                 moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
-                
-                let nextX = playerPos.x + moveDir.x * speed;
-                let nextZ = playerPos.z + moveDir.z * speed;
 
-                // التحقق من اصطدام المحور السيني X
-                let testX = new THREE.Vector3(nextX, playerPos.y + 0.9, playerPos.z);
-                let canMoveX = true;
-                for (let box of buildingBoxes) {
-                    if (box.containsPoint(testX)) {
-                        canMoveX = false;
-                        break;
+                if (isDriving) {
+                    carPos.addScaledVector(moveDir, speed);
+                    carObj.position.copy(carPos);
+                    carObj.rotation.y = Math.atan2(moveDir.x, moveDir.z);
+                    playerPos.copy(carPos);
+                } else {
+                    let nextX = playerPos.x + moveDir.x * speed;
+                    let nextZ = playerPos.z + moveDir.z * speed;
+
+                    let testX = new THREE.Vector3(nextX, playerPos.y + 0.9, playerPos.z);
+                    let canMoveX = true;
+                    for (let box of buildingBoxes) {
+                        if (box.containsPoint(testX)) { canMoveX = false; break; }
                     }
-                }
-                if (canMoveX && Math.abs(nextX) < MAP_LIMIT - 3) playerPos.x = nextX;
+                    if (canMoveX && Math.abs(nextX) < MAP_LIMIT - 3) playerPos.x = nextX;
 
-                // التحقق من اصطدام المحور العيني Z
-                let testZ = new THREE.Vector3(playerPos.x, playerPos.y + 0.9, nextZ);
-                let canMoveZ = true;
-                for (let box of buildingBoxes) {
-                    if (box.containsPoint(testZ)) {
-                        canMoveZ = false;
-                        break;
+                    let testZ = new THREE.Vector3(playerPos.x, playerPos.y + 0.9, nextZ);
+                    let canMoveZ = true;
+                    for (let box of buildingBoxes) {
+                        if (box.containsPoint(testZ)) { canMoveZ = false; break; }
                     }
-                }
-                if (canMoveZ && Math.abs(nextZ) < MAP_LIMIT - 3) playerPos.z = nextZ;
+                    if (canMoveZ && Math.abs(nextZ) < MAP_LIMIT - 3) playerPos.z = nextZ;
 
-                let angle = Math.atan2(moveDir.x, moveDir.z);
-                playerObj.group.rotation.y = angle;
+                    playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
+                }
             }
 
-            // تطبيق أنيميشن الأطراف للبطل
-            updateLimbAnimation(playerObj, isMoving);
-
-            // الجاذبية
-            playerVelocity.y -= 0.01;
-            playerPos.y += playerVelocity.y;
-            if (playerPos.y < 0) {
-                playerPos.y = 0;
-                playerVelocity.y = 0;
+            if (!isDriving) {
+                updateLimbAnimation(playerObj, isMoving);
+                playerVelocity.y -= 0.01;
+                playerPos.y += playerVelocity.y;
+                if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
+                playerObj.group.position.copy(playerPos);
             }
 
-            playerObj.group.position.copy(playerPos);
+            // تحديث المقذوفات الهجومية
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.mesh.position.addScaledVector(b.dir, 0.8);
+                b.life--;
+                if (b.life <= 0) {
+                    scene.remove(b.mesh);
+                    bullets.splice(i, 1);
+                }
+            }
 
-            // تحريك المواطنين أنيميشن وحركة حقيقية
+            // حركة المواطنين
             npcs.forEach(npc => {
                 npc.group.position.z += 0.04;
                 if (npc.group.position.z > MAP_LIMIT - 10) npc.group.position.z = -MAP_LIMIT + 10;
                 updateLimbAnimation(npc, true);
             });
 
-            // الكاميرا تتبع البطل
-            let camDistance = 8;
-            let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
-            let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2;
-            let camZ = playerPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
+            // الكاميرا الديناميكية
+            let targetPos = isDriving ? carPos : playerPos;
+            let camDistance = isDriving ? 12 : 8;
+            let camX = targetPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
+            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 3 : 2);
+            let camZ = targetPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
 
             camera.position.set(camX, camY, camZ);
-            camera.lookAt(playerPos.x, playerPos.y + 1.2, playerPos.z);
+            camera.lookAt(targetPos.x, targetPos.y + 1.2, targetPos.z);
 
             renderer.render(scene, camera);
         }

@@ -36,7 +36,6 @@
         #ui h1 { margin: 0 0 2px 0; font-size: 16px; color: #0284c7; }
         #ui p { margin: 0; font-size: 11px; color: #334155; }
 
-        /* نافذة الواقعية عند دخول المحلات */
         #store-modal {
             position: absolute;
             top: 50%;
@@ -94,7 +93,7 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>المدينة المتكاملة | محلات تجارية وواقع افتراضي حي</p>
+        <p>المدينة المتكاملة | نسخة محسنة ومستقرة للهواتف</p>
     </div>
 
     <div id="store-modal">
@@ -119,12 +118,16 @@
         let npcs = [];
         let projectiles = [];
         let buildingBoxes = [];
-        let stores = []; // مصفوفة لتخزين بيانات المحلات المتاحة في المباني
+        let stores = [];
 
-        const MAP_LIMIT = 240;
+        const MAP_LIMIT = 200; // تقليل طفيف لحدود الخريطة لمنع الشاشة السوداء وثقل الهاتف
 
-        init();
-        animate();
+        try {
+            init();
+            animate();
+        } catch (e) {
+            console.error("خطأ أثناء التشغيل:", e);
+        }
 
         function init() {
             scene = new THREE.Scene();
@@ -132,17 +135,18 @@
             scene.fog = new THREE.FogExp2(0x7dd3fc, 0.003);
 
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = false; // إيقاف الظلال المعقدة لمنع تهنيج الهاتف وظهور الشاشة السوداء
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
             scene.add(ambientLight);
 
-            const sunLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 1.0);
             sunLight.position.set(100, 200, 100);
-            sunLight.castShadow = true;
             scene.add(sunLight);
 
             playerObj = createHumanoidCharacter(0x0284c7, 0x1e293b, 0x38bdf8, true);
@@ -164,21 +168,21 @@
 
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(0.8, 1.1, 0.45),
-                new THREE.MeshStandardMaterial({ color: shirtColor })
+                new THREE.MeshLambertMaterial({ color: shirtColor })
             );
             body.position.y = 1.25;
             group.add(body);
 
             const head = new THREE.Mesh(
                 new THREE.BoxGeometry(0.5, 0.5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffdbac })
+                new THREE.MeshLambertMaterial({ color: 0xffdbac })
             );
             head.position.y = 2.1;
             group.add(head);
 
             const hair = new THREE.Mesh(
                 new THREE.BoxGeometry(0.54, 0.2, 0.54),
-                new THREE.MeshStandardMaterial({ color: hairColor })
+                new THREE.MeshLambertMaterial({ color: hairColor })
             );
             hair.position.set(0, 2.38, 0);
             group.add(hair);
@@ -191,7 +195,7 @@
             group.add(eyeL); group.add(eyeR);
 
             const armGeo = new THREE.BoxGeometry(0.24, 0.9, 0.24);
-            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
+            const armMat = new THREE.MeshLambertMaterial({ color: shirtColor });
             
             const armLGroup = new THREE.Group();
             const armL = new THREE.Mesh(armGeo, armMat);
@@ -208,7 +212,7 @@
             group.add(armRGroup);
 
             const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
-            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor });
+            const legMat = new THREE.MeshLambertMaterial({ color: pantsColor });
 
             const legLGroup = new THREE.Group();
             const legL = new THREE.Mesh(legGeo, legMat);
@@ -236,7 +240,7 @@
 
         function buildMassiveRealisticCity() {
             const grassGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
-            const grassMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.8 });
+            const grassMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
             const grass = new THREE.Mesh(grassGeo, grassMat);
             grass.rotation.x = -Math.PI / 2;
             scene.add(grass);
@@ -246,7 +250,7 @@
             for (let i = -MAP_LIMIT + 40; i <= MAP_LIMIT - 40; i += 60) {
                 const roadLong = new THREE.Mesh(
                     new THREE.PlaneGeometry(16, MAP_LIMIT * 2),
-                    new THREE.MeshStandardMaterial({ color: 0x1e293b })
+                    new THREE.MeshLambertMaterial({ color: 0x1e293b })
                 );
                 roadLong.rotation.x = -Math.PI / 2;
                 roadLong.position.set(i, 0.01, 0);
@@ -254,7 +258,7 @@
 
                 const roadCross = new THREE.Mesh(
                     new THREE.PlaneGeometry(MAP_LIMIT * 2, 16),
-                    new THREE.MeshStandardMaterial({ color: 0x1e293b })
+                    new THREE.MeshLambertMaterial({ color: 0x1e293b })
                 );
                 roadCross.rotation.x = -Math.PI / 2;
                 roadCross.position.set(0, 0.01, i);
@@ -276,14 +280,14 @@
                 for (let z = -MAP_LIMIT + 50; z <= MAP_LIMIT - 50; z += 60) {
                     if (Math.abs(x) < 20 && Math.abs(z) < 20) continue;
 
-                    let bWidth = 24, bDepth = 24, bHeight = 20 + Math.random() * 30;
+                    let bWidth = 24, bDepth = 24, bHeight = 20 + Math.random() * 20;
                     let bColor = buildingColors[Math.floor(Math.random() * buildingColors.length)];
                     let bPosX = x + 15;
                     let bPosZ = z + 15;
 
                     const bMesh = new THREE.Mesh(
                         new THREE.BoxGeometry(bWidth, bHeight, bDepth),
-                        new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.4 })
+                        new THREE.MeshLambertMaterial({ color: bColor })
                     );
                     bMesh.position.set(bPosX, bHeight / 2, bPosZ);
                     scene.add(bMesh);
@@ -292,44 +296,26 @@
                     box.expandByScalar(0.8);
                     buildingBoxes.push(box);
 
-                    // تخصيص متجر لكل مبنى بالتناوب
                     let currentStore = storeTypes[storeIndex % storeTypes.length];
                     storeIndex++;
 
                     stores.push({
                         name: currentStore.name,
                         desc: currentStore.desc,
-                        position: new THREE.Vector3(bPosX, 0, bPosZ + bDepth / 2 + 3), // نقطة الوقوف أمام باب المحل
+                        position: new THREE.Vector3(bPosX, 0, bPosZ + bDepth / 2 + 3),
                         radius: 4.5
                     });
 
-                    // باب المبنى والمحل
                     const door = new THREE.Mesh(
                         new THREE.BoxGeometry(4, 6, 0.3),
-                        new THREE.MeshStandardMaterial({ color: 0x7c2d12 })
+                        new THREE.MeshLambertMaterial({ color: 0x7c2d12 })
                     );
                     door.position.set(bPosX, 3, bPosZ + bDepth / 2 + 0.1);
                     scene.add(door);
-
-                    const windowMat = new THREE.MeshPhysicalMaterial({ 
-                        color: 0x38bdf8, 
-                        transparent: true, 
-                        opacity: 0.7, 
-                        roughness: 0.1,
-                        metalness: 0.1
-                    });
-
-                    for (let yWin = 10; yWin < bHeight - 4; yWin += 7) {
-                        for (let xWin = -8; xWin <= 8; xWin += 8) {
-                            const win = new THREE.Mesh(new THREE.BoxGeometry(3.5, 4, 0.3), windowMat);
-                            win.position.set(bPosX + xWin, yWin, bPosZ + bDepth / 2 + 0.15);
-                            scene.add(win);
-                        }
-                    }
                 }
             }
 
-            for (let i = 0; i < 35; i++) {
+            for (let i = 0; i < 20; i++) {
                 let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
                 let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
                 let npc = createHumanoidCharacter(
@@ -410,7 +396,7 @@
                 playerObj.armR.rotation.x = -Math.PI / 1.2;
                 setTimeout(() => playerObj.armR.rotation.x = 0, 200);
 
-                let pGeo = new THREE.SphereGeometry(0.4, 16, 16);
+                let pGeo = new THREE.SphereGeometry(0.4, 8, 8);
                 let pMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
                 let fireball = new THREE.Mesh(pGeo, pMat);
                 
@@ -440,7 +426,6 @@
             }
         }
 
-        // فحص دخول المحلات
         let activeStoreName = "";
         function checkStoresProximity() {
             let foundStore = null;
@@ -512,7 +497,6 @@
 
             playerObj.group.position.copy(playerPos);
 
-            // التحقق من الاقتراب من أبواب المحلات
             checkStoresProximity();
 
             for (let i = projectiles.length - 1; i >= 0; i--) {

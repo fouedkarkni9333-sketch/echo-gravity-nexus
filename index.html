@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus</title>
+    <title>Echo Gravity Nexus - Combat City</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #0f172a;
+            background-color: #020617;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
@@ -37,92 +37,61 @@
         #crosshair {
             position: absolute;
             top: 50%; left: 50%;
-            width: 14px; height: 14px;
+            width: 16px; height: 16px;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            border: 3px solid #38bdf8;
+            border: 2px solid #ef4444;
             border-radius: 50%;
             z-index: 5;
         }
-        #hotbar {
-            position: absolute;
-            bottom: 25px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 8px;
-            background: rgba(15, 23, 42, 0.95);
-            padding: 10px; border-radius: 14px;
-            border: 2px solid #38bdf8;
-            z-index: 10;
-        }
-        .slot {
-            width: 42px; height: 42px;
-            border: 2px solid #475569;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
-        .slot.active { border-color: #38bdf8; transform: scale(1.15); }
-        .slot-color { width: 26px; height: 26px; border-radius: 6px; }
         #joystick-zone {
-            position: absolute; bottom: 90px; left: 20px;
-            width: 120px; height: 120px;
+            position: absolute; bottom: 30px; left: 30px;
+            width: 130px; height: 130px;
             background: rgba(56, 189, 248, 0.1);
             border: 2px solid #38bdf8;
             border-radius: 50%; z-index: 10;
         }
         #joystick-knob {
-            position: absolute; top: 35px; left: 35px;
+            position: absolute; top: 40px; left: 40px;
             width: 50px; height: 50px;
             background: rgba(56, 189, 248, 0.5);
             border-radius: 50%; pointer-events: none;
         }
         .action-btns {
-            position: absolute; bottom: 90px; right: 20px;
+            position: absolute; bottom: 30px; right: 30px;
             display: flex; flex-direction: column; gap: 12px; z-index: 10;
         }
         .action-btn {
-            width: 60px; height: 60px;
-            background: rgba(56, 189, 248, 0.2);
-            border: 2px solid #38bdf8;
-            color: #38bdf8; font-weight: bold;
+            width: 65px; height: 65px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #ef4444; font-weight: bold; font-size: 14px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
         }
+        .action-btn:active { background: rgba(239, 68, 68, 0.5); }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus</h1>
-        <p>عالم النيون المضيء | جرب أزرار الحلبة بالأسفل</p>
+        <p>المدينة الكبرى للقتال | استكشف الشوارع والمباني</p>
     </div>
     <div id="crosshair"></div>
     
-    <div id="hotbar">
-        <div class="slot active" onclick="selectBlock(0)"><div class="slot-color" style="background:#00ffff"></div></div>
-        <div class="slot" onclick="selectBlock(1)"><div class="slot-color" style="background:#ff00ff"></div></div>
-        <div class="slot" onclick="selectBlock(2)"><div class="slot-color" style="background:#ffff00"></div></div>
-        <div class="slot" onclick="selectBlock(3)"><div class="slot-color" style="background:#ff3300"></div></div>
-        <div class="slot" onclick="selectBlock(4)"><div class="slot-color" style="background:#00ff66"></div></div>
-        <div class="slot" onclick="selectBlock(5)"><div class="slot-color" style="background:#ffffff"></div></div>
-        <div class="slot" onclick="selectBlock(6)"><div class="slot-color" style="background:#9900ff"></div></div>
-        <div class="slot" onclick="selectBlock(7)"><div class="slot-color" style="background:#ff9900"></div></div>
-    </div>
-
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div class="action-btns">
         <div class="action-btn" id="jump-btn">قفز</div>
-        <div class="action-btn" id="build-btn" style="background: rgba(255,0,255,0.2); border-color: #ff00ff; color: #ff00ff;">بناء</div>
+        <div class="action-btn" id="fire-btn" style="background: rgba(56,189,248,0.2); border-color: #38bdf8; color: #38bdf8;">إطلاق</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         let scene, camera, renderer, blocks = [], raycaster;
-        let selectedMaterialIndex = 0;
-        const blockColors = [0x00ffff, 0xff00ff, 0xffff00, 0xff3300, 0x00ff66, 0xffffff, 0x9900ff, 0xff9900];
         let moveVector = new THREE.Vector2(0, 0);
         let velocity = new THREE.Vector3();
-        let position = new THREE.Vector3(0, 15, 12);
+        let position = new THREE.Vector3(0, 5, 20);
         let pitch = 0, yaw = 0;
 
         init();
@@ -131,29 +100,38 @@
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x020617);
+            scene.fog = new THREE.FogExp2(0x020617, 0.015);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // إضاءة ساطعة وقوية لضمان ظهور الألوان بوضوح تامة
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
             scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-            dirLight.position.set(20, 50, 20);
+            const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.5);
+            dirLight.position.set(50, 100, 50);
             scene.add(dirLight);
 
             raycaster = new THREE.Raycaster();
 
-            // بناء عالم نيون واضح وملون
-            for (let x = -10; x <= 10; x++) {
-                for (let z = -10; z <= 10; z++) {
-                    let h = Math.floor(Math.sin(x * 0.4) * Math.cos(z * 0.4) * 3) + 3;
-                    for (let y = 0; y <= h; y++) {
-                        let colorIdx = (y === h) ? 0 : (y > 2 ? 1 : 2);
-                        if (Math.random() < 0.1 && y === h) colorIdx = Math.floor(Math.random() * blockColors.length);
-                        createBlock(x, y, z, blockColors[colorIdx]);
+            // بناء مدينة واسعة وكبيرة جداً (ناطحات سحاب وشوارع)
+            const citySize = 30; // توسيع المدينة
+            for (let x = -citySize; x <= citySize; x += 3) {
+                for (let z = -citySize; z <= citySize; z += 3) {
+                    // أرضية الشوارع والمدينة
+                    createBlock(x, 0, z, 0x1e293b);
+                    createBlock(x+1, 0, z, 0x1e293b);
+
+                    // ترك مسافات للشوارع، وبناء مبانٍ شاهقة مختلفة الأطوال
+                    if (Math.abs(x) > 4 || Math.abs(z) > 4) {
+                        let buildingHeight = Math.floor(Math.abs(Math.sin(x * 0.5) * Math.cos(z * 0.5)) * 12) + 3;
+                        for (let y = 1; y <= buildingHeight; y++) {
+                            // ألوان نيون مختلفة للمباني والزجاج
+                            let col = (y === buildingHeight) ? 0x38bdf8 : (y % 2 === 0 ? 0x0f172a : 0x334155);
+                            createBlock(x, y, z, col);
+                            createBlock(x+1, y, z, col);
+                        }
                     }
                 }
             }
@@ -168,21 +146,12 @@
         }
 
         function createBlock(x, y, z, colorHex) {
-            const geometry = new THREE.BoxGeometry(1, 1, 1);
-            // استخدام MeshBasicMaterial لضمان أن الألوان مضيئة وساطعة بدون الحاجة لتأثيرات إضاءة معقدة
+            const geometry = new THREE.BoxGeometry(2, 1, 2);
             const material = new THREE.MeshBasicMaterial({ color: colorHex });
             const cube = new THREE.Mesh(geometry, material);
             cube.position.set(x, y, z);
             scene.add(cube);
             blocks.push(cube);
-        }
-
-        function selectBlock(index) {
-            selectedMaterialIndex = index;
-            document.querySelectorAll('.slot').forEach((s, i) => {
-                if (i === index) s.classList.add('active');
-                else s.classList.remove('active');
-            });
         }
 
         function setupControls() {
@@ -210,7 +179,7 @@
                 let rect = zone.getBoundingClientRect();
                 let dx = t.clientX - (rect.left + rect.width / 2);
                 let dy = t.clientY - (rect.top + rect.height / 2);
-                let dist = Math.sqrt(dx*dx + dy*dy), maxD = 40;
+                let dist = Math.sqrt(dx*dx + dy*dy), maxD = 45;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
                 moveVector.set(dx/maxD, dy/maxD);
@@ -218,7 +187,7 @@
 
             let dragging = false, px = 0, py = 0;
             window.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#joystick-zone') || e.target.closest('#hotbar') || e.target.closest('.action-btns')) return;
+                if (e.target.closest('#joystick-zone') || e.target.closest('.action-btns')) return;
                 dragging = true; px = e.touches[0].clientX; py = e.touches[0].clientY;
             });
             window.addEventListener('touchmove', (e) => {
@@ -233,23 +202,18 @@
             window.addEventListener('touchend', () => { dragging = false; });
 
             document.getElementById('jump-btn').addEventListener('touchstart', () => {
-                if (position.y <= 2.1) velocity.y = 0.13;
+                if (position.y <= 2.1) velocity.y = 0.15;
             });
 
-            document.getElementById('build-btn').addEventListener('touchstart', () => {
-                raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
-                let hits = raycaster.intersectObjects(blocks);
-                if (hits.length > 0) {
-                    let hit = hits[0];
-                    let p = hit.object.position.clone().add(hit.face.normal);
-                    createBlock(p.x, p.y, p.z, blockColors[selectedMaterialIndex]);
-                }
+            document.getElementById('fire-btn').addEventListener('touchstart', () => {
+                // تأثير إطلاق النار في المدينة
+                alert("تم إطلاق طلقة طاقة في المدينة! جاهز لإضافة الأعداء.");
             });
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            let speed = 0.09;
+            let speed = 0.12;
             let dir = new THREE.Vector3(moveVector.x, 0, moveVector.y).applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
             position.x += dir.x * speed;
             position.z += dir.z * speed;

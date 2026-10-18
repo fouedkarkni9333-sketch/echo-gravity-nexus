@@ -72,7 +72,7 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus - المدينة الحية الواقعية</h1>
-        <p>تم تصحيح الاتجاهات ونظام التصادم بدقة عالية</p>
+        <p>تم إصلاح مشكلة تداخل الجدران وعزل الشخصية هندسياً</p>
         <p id="status-txt">الحالة: تجول حر | الصحة: 100</p>
     </div>
     
@@ -100,7 +100,7 @@
         let carPos = new THREE.Vector3(15, 0, 15);
 
         const MAP_LIMIT = 240;
-        const PLAYER_RADIUS = 0.6;
+        const PLAYER_RADIUS = 0.85; // زيادة هامش الأمان لمنع أي تداخل مع الحوائط
 
         init();
         animate();
@@ -224,6 +224,7 @@
 
             carGroup.position.copy(carPos);
             carBox = new THREE.Box3().setFromObject(carGroup);
+            carBox.expandByScalar(0.4); // توسيع هامش السيارة
             return carGroup;
         }
 
@@ -260,7 +261,9 @@
                     bMesh.castShadow = true; bMesh.receiveShadow = true;
                     scene.add(bMesh);
 
+                    // إنشاء صندوق التصادم وتوسيعه هندسياً لمنع الاختراق كلياً
                     let box = new THREE.Box3().setFromObject(bMesh);
+                    box.expandByScalar(0.35); 
                     buildingBoxes.push(box);
 
                     let doorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
@@ -347,8 +350,6 @@
                 let dist = Math.sqrt(dx*dx + dy*dy), maxD = 45;
                 if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
                 knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                
-                // تم تعديل إشارة المحور الأفقي لعكس اليمين واليسار لتتطابق تماماً مع الحركة الصحيحة
                 moveVector.set(-dx / maxD, -dy / maxD);
             }
 
@@ -503,10 +504,11 @@
                 updateLimbAnimation(npc, true);
             });
 
+            // ضبط مسافة الكاميرا وزاويتها لمنع أي تداخل بصري
             let targetPos = isDriving ? carPos : playerPos;
-            let camDistance = isDriving ? 14 : 9;
+            let camDistance = isDriving ? 15 : 10;
             let camX = targetPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
-            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 3.5 : 2.5);
+            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 4 : 3);
             let camZ = targetPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
 
             camera.position.set(camX, camY, camZ);

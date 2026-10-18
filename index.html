@@ -72,7 +72,7 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <h1>Echo Gravity Nexus - المدينة الحية الواقعية</h1>
-        <p>تم تحسين الكاميرا والجلوس داخل السيارة بدقة واقعية</p>
+        <p>تم إصلاح مشكلة تداخل الجدران وعزل الشخصية هندسياً</p>
         <p id="status-txt">الحالة: تجول حر | الصحة: 100</p>
     </div>
     
@@ -90,7 +90,7 @@
         let moveVector = new THREE.Vector2(0, 0);
         let playerVelocity = new THREE.Vector3();
         let playerPos = new THREE.Vector3(0, 0, 10);
-        let camYaw = 0, camPitch = 0.4;
+        let camYaw = 0, camPitch = 0.35;
         let npcs = [];
         let buildingBoxes = [];
         let bullets = [];
@@ -100,7 +100,7 @@
         let carPos = new THREE.Vector3(15, 0, 15);
 
         const MAP_LIMIT = 240;
-        const PLAYER_RADIUS = 0.85;
+        const PLAYER_RADIUS = 0.85; // زيادة هامش الأمان لمنع أي تداخل مع الحوائط
 
         init();
         animate();
@@ -108,19 +108,19 @@
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0f172a);
-            scene.fog = new THREE.FogExp2(0x0f172a, 0.003);
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.0035);
 
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
 
-            const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.4);
             sunLight.position.set(120, 250, 120);
             sunLight.castShadow = true;
             sunLight.shadow.mapSize.width = 2048;
@@ -224,7 +224,7 @@
 
             carGroup.position.copy(carPos);
             carBox = new THREE.Box3().setFromObject(carGroup);
-            carBox.expandByScalar(0.4);
+            carBox.expandByScalar(0.4); // توسيع هامش السيارة
             return carGroup;
         }
 
@@ -261,6 +261,7 @@
                     bMesh.castShadow = true; bMesh.receiveShadow = true;
                     scene.add(bMesh);
 
+                    // إنشاء صندوق التصادم وتوسيعه هندسياً لمنع الاختراق كلياً
                     let box = new THREE.Box3().setFromObject(bMesh);
                     box.expandByScalar(0.35); 
                     buildingBoxes.push(box);
@@ -269,6 +270,18 @@
                     let door = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.6), doorMat);
                     door.position.set(x + 15, 2.5, z + 15 + bDepth / 2 + 0.2);
                     scene.add(door);
+
+                    if (buildingCount % 3 === 0) {
+                        let signMat = new THREE.MeshBasicMaterial({ color: 0xec4899 });
+                        let sign = new THREE.Mesh(new THREE.BoxGeometry(9, 1.8, 0.5), signMat);
+                        sign.position.set(x + 15, 7, z + 15 + bDepth / 2 + 0.3);
+                        scene.add(sign);
+                    } else if (buildingCount % 4 === 0) {
+                        let neonMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6 });
+                        let neon = new THREE.Mesh(new THREE.BoxGeometry(11, 2, 0.5), neonMat);
+                        neon.position.set(x + 15, 8, z + 15 + bDepth / 2 + 0.3);
+                        scene.add(neon);
+                    }
 
                     let winMat = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8, roughness: 0.1 });
                     for (let wy = 12; wy < bHeight - 4; wy += 6) {
@@ -280,6 +293,15 @@
                     }
                     buildingCount++;
                 }
+            }
+
+            for (let i = 0; i < 30; i++) {
+                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                let npc = createHumanoidCharacter(Math.random() * 0xffffff, 0x1e293b, Math.random() * 0xffffff);
+                npc.group.position.set(rx, 0, rz);
+                scene.add(npc.group);
+                npcs.push(npc);
             }
         }
 
@@ -342,7 +364,7 @@
                 if (!t) return;
                 camYaw -= (t.clientX - px) * 0.005;
                 camPitch -= (t.clientY - py) * 0.003;
-                camPitch = Math.max(0.15, Math.min(1.1, camPitch));
+                camPitch = Math.max(0.1, Math.min(1.2, camPitch));
                 px = t.clientX; py = t.clientY;
             });
             window.addEventListener('touchend', () => { dragging = false; });
@@ -367,9 +389,9 @@
 
             document.getElementById('car-btn').addEventListener('touchstart', () => {
                 let dist = playerPos.distanceTo(carPos);
-                if (dist < 7) {
+                if (dist < 6) {
                     isDriving = !isDriving;
-                    playerObj.group.visible = isDriving; // إظهار الشخصية بداخل السيارة في مقعد السائق
+                    playerObj.group.visible = !isDriving;
                     document.getElementById('car-btn').innerText = isDriving ? "ترجل" : "ركوب";
                 }
             });
@@ -396,17 +418,20 @@
                 new THREE.Vector3(pos.x - radius, pos.y, pos.z - radius),
                 new THREE.Vector3(pos.x + radius, pos.y + 1.8, pos.z + radius)
             );
+
             for (let box of buildingBoxes) {
                 if (box.intersectsBox(testBox)) return true;
             }
+
             if (!isDriving && carBox && carBox.intersectsBox(testBox)) return true;
+
             return false;
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            let speed = isDriving ? 0.4 : 0.18;
+            let speed = isDriving ? 0.38 : 0.18;
             let isMoving = moveVector.length() > 0;
 
             if (isMoving) {
@@ -430,18 +455,17 @@
                         carObj.position.copy(carPos);
                         carBox.copy(tempCarBox);
                         carObj.rotation.y = Math.atan2(moveDir.x, moveDir.z);
-                        
-                        // تعديل موضع الشخصية لتجلس بشكل صحيح داخل السيارة
                         playerPos.copy(carPos);
-                        playerObj.group.position.copy(carPos).add(new THREE.Vector3(-0.4, 0.4, -0.2));
-                        playerObj.group.rotation.y = carObj.rotation.y;
                     }
                 } else {
                     let stepX = new THREE.Vector3(playerPos.x + moveDir.x * speed, playerPos.y, playerPos.z);
                     let stepZ = new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDir.z * speed);
 
-                    if (!checkCollisionAt(stepX, PLAYER_RADIUS)) playerPos.x = stepX.x;
-                    if (!checkCollisionAt(stepZ, PLAYER_RADIUS)) playerPos.z = stepZ.z;
+                    let canMoveX = !checkCollisionAt(stepX, PLAYER_RADIUS);
+                    let canMoveZ = !checkCollisionAt(stepZ, PLAYER_RADIUS);
+
+                    if (canMoveX) playerPos.x = stepX.x;
+                    if (canMoveZ) playerPos.z = stepZ.z;
 
                     playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
                 }
@@ -465,15 +489,30 @@
                 }
             }
 
-            // تعديل مسافة الكاميرا وزاوية الرؤية لمنع التداخل تماماً
+            npcs.forEach(npc => {
+                let nextNpcZ = npc.group.position.z + 0.04;
+                if (nextNpcZ > MAP_LIMIT - 10) nextNpcZ = -MAP_LIMIT + 10;
+                
+                let npcTestPos = npc.group.position.clone();
+                npcTestPos.z = nextNpcZ;
+
+                if (!checkCollisionAt(npcTestPos, 0.4)) {
+                    npc.group.position.z = nextNpcZ;
+                } else {
+                    npc.group.position.z = -MAP_LIMIT + 10;
+                }
+                updateLimbAnimation(npc, true);
+            });
+
+            // ضبط مسافة الكاميرا وزاويتها لمنع أي تداخل بصري
             let targetPos = isDriving ? carPos : playerPos;
-            let camDistance = isDriving ? 14 : 9;
+            let camDistance = isDriving ? 15 : 10;
             let camX = targetPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
-            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 3.5 : 2.5);
+            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 4 : 3);
             let camZ = targetPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
 
             camera.position.set(camX, camY, camZ);
-            camera.lookAt(targetPos.x, targetPos.y + 1.0, targetPos.z);
+            camera.lookAt(targetPos.x, targetPos.y + 1.2, targetPos.z);
 
             renderer.render(scene, camera);
         }

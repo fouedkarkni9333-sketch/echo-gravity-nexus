@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Reaction Blitz ⚡ - Pro Edition</title>
+  <title>Face Reaction Blitz ⚡ - Global Edition</title>
   <style>
     * {
       box-sizing: border-box;
       user-select: none;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: #090d16;
       color: #fff;
       display: flex;
@@ -23,7 +23,6 @@
       overflow: hidden;
     }
 
-    /* تأثير اهتزاز الشاشة */
     .shake {
       animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
     }
@@ -45,16 +44,34 @@
       box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
       position: relative;
     }
-    .score-board {
+    .top-bar {
       display: flex;
       justify-content: space-between;
-      font-size: 1.2rem;
-      font-weight: 800;
+      align-items: center;
       margin-bottom: 15px;
       background: #0f172a;
-      padding: 12px 20px;
+      padding: 10px 18px;
       border-radius: 12px;
       border: 1px solid #334155;
+    }
+    .score-info {
+      display: flex;
+      gap: 15px;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+    .settings-btn {
+      background: #334155;
+      border: 1px solid #475569;
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+    .settings-btn:hover {
+      background: #475569;
     }
     .camera-box {
       position: relative;
@@ -80,12 +97,11 @@
       border: 2px solid #facc15;
       padding: 10px 22px;
       border-radius: 30px;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 900;
       color: #facc15;
       white-space: nowrap;
       box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-      transition: all 0.2s ease;
     }
     .timer-bar-container {
       width: 100%;
@@ -119,7 +135,9 @@
       background: #7dd3fc;
       transform: translateY(-2px);
     }
-    .game-over-screen {
+    
+    /* Overlays (Game Over & Settings) */
+    .modal-overlay {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -132,8 +150,8 @@
       z-index: 10;
     }
     .fail-snapshot {
-      width: 160px;
-      height: 120px;
+      width: 150px;
+      height: 110px;
       border-radius: 10px;
       border: 3px solid #ef4444;
       margin: 10px 0;
@@ -141,41 +159,167 @@
       transform: scaleX(-1);
       box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
     }
+    select {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 2px solid #38bdf8;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 10px;
+      outline: none;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
   <div class="game-card" id="main-card">
-    <div class="score-board">
-      <div>النقاط: <span id="score" style="color:#38bdf8;">0</span></div>
-      <div>أعلى نتيجة: <span id="high-score" style="color:#facc15;">0</span></div>
+    <div class="top-bar">
+      <div class="score-info">
+        <div>Score: <span id="score" style="color:#38bdf8;">0</span></div>
+        <div>Best: <span id="high-score" style="color:#facc15;">0</span></div>
+      </div>
+      <button class="settings-btn" onclick="openSettings()">⚙️</button>
     </div>
 
     <div class="camera-box">
       <video id="webcam" autoplay playsinline></video>
-      <div class="command-overlay" id="command-display">جاري التحميل... ⏳</div>
+      <div class="command-overlay" id="command-display">Loading Engine... ⏳</div>
     </div>
 
     <div class="timer-bar-container">
       <div class="timer-bar" id="timer-bar"></div>
     </div>
 
-    <button class="btn" id="start-btn" onclick="startGame()" style="display:none;">ابدأ التحدي 🔥</button>
+    <button class="btn" id="start-btn" onclick="startGame()" style="display:none;">START GAME 🔥</button>
 
-    <!-- شاشة الخسارة -->
-    <div class="game-over-screen" id="game-over">
-      <h2 style="color: #ef4444; font-size: 2.2rem; margin: 0;">خسرت! 💥</h2>
-      <p style="margin: 5px 0; color: #94a3b8;">تعبير وجهك عند الخسارة:</p>
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+      <h2 style="color: #38bdf8; font-size: 1.8rem; margin-top: 0;">Settings ⚙️</h2>
+      <label for="lang-select" style="font-weight: bold; margin-bottom: 5px;">Language / اللغة / 语言:</label>
+      <select id="lang-select" onchange="changeLanguage(this.value)">
+        <!-- 30 Languages -->
+        <option value="en">English 🇬🇧</option>
+        <option value="es">Español 🇪🇸</option>
+        <option value="fr">Français 🇫🇷</option>
+        <option value="de">Deutsch 🇩🇪</option>
+        <option value="it">Italiano 🇮🇹</option>
+        <option value="pt">Português 🇵🇹</option>
+        <option value="ru">Русский 🇷🇺</option>
+        <option value="zh">中文 🇨🇳</option>
+        <option value="ja">日本語 🇯🇵</option>
+        <option value="ko">한국어 🇰🇷</option>
+        <option value="ar">العربية 🇸🇦</option>
+        <option value="tr">Türkçe 🇹🇷</option>
+        <option value="nl">Nederlands 🇳🇱</option>
+        <option value="pl">Polski 🇵🇱</option>
+        <option value="sv">Svenska 🇸🇪</option>
+        <option value="hi">हिन्दी 🇮🇳</option>
+        <option value="id">Bahasa Indonesia 🇮🇩</option>
+        <option value="vi">Tiếng Việt 🇻🇳</option>
+        <option value="th">ไทย 🇹🇭</option>
+        <option value="cs">Čeština 🇨🇿</option>
+        <option value="el">Ελληνικά 🇬🇷</option>
+        <option value="he">עברית 🇮🇱</option>
+        <option value="ro">Română 🇷🇴</option>
+        <option value="hu">Magyar 🇭🇺</option>
+        <option value="uk">Українська 🇺🇦</option>
+        <option value="fi">Suomi 🇫🇮</option>
+        <option value="no">Norsk 🇳🇴</option>
+
+        <option value="da">Dansk 🇩🇰</option>
+        <option value="ms">Bahasa Melayu 🇲🇾</option>
+        <option value="fa">فارسی 🇮🇷</option>
+      </select>
+      <button class="btn" style="margin-top: 25px;" onclick="closeSettings()">CLOSE & SAVE</button>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="game-over">
+      <h2 style="color: #ef4444; font-size: 2.2rem; margin: 0;" id="txt-gameover">GAME OVER! 💥</h2>
+      <p style="margin: 5px 0; color: #94a3b8;" id="txt-failsnap">Your face on fail:</p>
       <canvas id="snapshot-canvas" class="fail-snapshot"></canvas>
-      <p style="font-size: 1.3rem; margin: 10px 0;">النتيجة النهائية: <span id="final-score" style="color:#38bdf8; font-weight:bold;">0</span></p>
-      <button class="btn" onclick="startGame()">محاولة أخرى 🔄</button>
+      <p style="font-size: 1.3rem; margin: 10px 0;"><span id="txt-finalscore">Final Score</span>: <span id="final-score" style="color:#38bdf8; font-weight:bold;">0</span></p>
+      <button class="btn" onclick="startGame()" id="btn-tryagain">TRY AGAIN 🔄</button>
     </div>
   </div>
 
   <script type="module">
     import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
-    // العناصر
+    // 30 Languages Translations Dictionary
+    const translations = {
+      en: { ready: "READY! PRESS START 🚀", start: "START GAME 🔥", over: "GAME OVER! 💥", fail: "Your face on fail:", final: "Final Score", tryAgain: "TRY AGAIN 🔄", close: "CLOSE & SAVE", MOUTH_OPEN: "😮 OPEN YOUR MOUTH!", BLINK_LEFT: "😉 WINK LEFT EYE!", BLINK_RIGHT: "😜 WINK RIGHT EYE!", BROWS_UP: "🤨 RAISE EYEBROWS!", TILT_LEFT: "👈 TILT HEAD LEFT!", TILT_RIGHT: "👉 TILT HEAD RIGHT!", success: "GREAT! ⚡" },
+      es: { ready: "¡LISTO! PRESIONA INICIAR 🚀", start: "EMPEZAR JUEGO 🔥", over: "¡JUEGO TERMINADO! 💥", fail: "Tu cara al perder:", final: "Puntuación Final", tryAgain: "REINTENTAR 🔄", close: "CERRAR Y GUARDAR", MOUTH_OPEN: "😮 ¡ABRE LA BOCA!", BLINK_LEFT: "😉 ¡GUIÑA OJO IZQUIERDO!", BLINK_RIGHT: "😜 ¡GUIÑA OJO DERECHO!", BROWS_UP: "🤨 ¡LEVANTA CEJAS!", TILT_LEFT: "👈 INCLINA A LA IZQUIERDA!", TILT_RIGHT: "👉 INCLINA A LA DERECHA!", success: "¡GENIAL! ⚡" },
+      fr: { ready: "PRÊT! APPUYEZ SUR DÉMARRER 🚀", start: "JOUER 🔥", over: "PARTIE TERMINÉE! 💥", fail: "Votre visage à la défaite:", final: "Score Final", tryAgain: "RÉESSAYER 🔄", close: "FERMER ET ENREGISTRER", MOUTH_OPEN: "😮 OUVREZ LA BOUCHE!", BLINK_LEFT: "😉 CLIN D'ŒIL GAUCHE!", BLINK_RIGHT: "😜 CLIN D'ŒIL DROIT!", BROWS_UP: "🤨 LEVEZ LES SOURCILS!", TILT_LEFT: "👈 PENCHEZ À GAUCHE!", TILT_RIGHT: "👉 PENCHEZ À DROITE!", success: "SUPER! ⚡" },
+      de: { ready: "BEREIT! START DRÜCKEN 🚀", start: "SPIEL STARTEN 🔥", over: "SPIEL VORBEI! 💥", fail: "Dein Gesicht beim Verlieren:", final: "Endpunktestand", tryAgain: "ERNEUT VERSUCHEN 🔄", close: "SCHLIESSEN & SPEICHERN", MOUTH_OPEN: "😮 MUND ÖFFNEN!", BLINK_LEFT: "😉 LINKES AUGE ZZWINKERN!", BLINK_RIGHT: "😜 RECHTES AUGE ZZWINKERN!", BROWS_UP: "🤨 AUGENBRAUEN HEBEN!", TILT_LEFT: "👈 KOPF NACH LINKS!", TILT_RIGHT: "👉 KOPF NACH RECHTS!", success: "SUPER! ⚡" },
+      it: { ready: "PRONTO! PREMI START 🚀", start: "INIZIA GIOCO 🔥", over: "GAME OVER! 💥", fail: "La tua faccia quando perdi:", final: "Punteggio Finale", tryAgain: "RIPROVA 🔄", close: "CHIUDI E SALVA", MOUTH_OPEN: "😮 APRI LA BOCCA!", BLINK_LEFT: "😉 FAI IL SIFFIETTO A SINISTRA!", BLINK_RIGHT: "😜 FAI IL SIFFIETTO A DESTRA!", BROWS_UP: "🤨 ALZA LE SOPRACCIGLIA!", TILT_LEFT: "👈 INCLINA A SINISTRA!", TILT_RIGHT: "👉 INCLINA A DESTRA!", success: "OTTIMO! ⚡" },
+      pt: { ready: "PRONTO! PRESSIONE INICIAR 🚀", start: "INICIAR JOGO 🔥", over: "FIM DE JOGO! 💥", fail: "Sua cara ao perder:", final: "Pontuação Final", tryAgain: "TENTAR NOVAMENTE 🔄", close: "FECHAR E SALVAR", MOUTH_OPEN: "😮 ABRA A BOCA!", BLINK_LEFT: "😉 PISQUE O OLHO ESQUERDO!", BLINK_RIGHT: "😜 PISQUE O OLHO DIREITO!", BROWS_UP: "🤨 LEVANTE AS SOBRANCELHAS!", TILT_LEFT: "👈 INCLINE PARA A ESQUERDA!", TILT_RIGHT: "👉 INCLINE PARA A DIREITA!", success: "INCRÍVEL! ⚡" },
+      ru: { ready: "ГОТОВО! НАЖМИТЕ СТАРТ 🚀", start: "НАЧАТЬ ИГРУ 🔥", over: "ИГРА ОКОНЧЕНА! 💥", fail: "Твое лицо при проигрыше:", final: "Финальный счет", tryAgain: "ПОПРОБОВАТЬ СНОВА 🔄", close: "ЗАКРЫТЬ И СОХРАНИТЬ", MOUTH_OPEN: "😮 ОТКРОЙ РОТ!", BLINK_LEFT: "😉 МИГНИ ЛЕВЫМ ГЛАЗОМ!", BLINK_RIGHT: "😜 МИГНИ ПРАВЫМ ГЛАЗОМ!", BROWS_UP: "🤨 ПОДНИМИ БРОВИ!", TILT_LEFT: "👈 НАКЛОНИ ГОЛОВУ ВЛЕВО!", TILT_RIGHT: "👉 НАКЛОНИ ГОЛОВУ ВПРАВО!", success: "ОТЛИЧНО! ⚡" },
+      zh: { ready: "准备好了！点击开始 🚀", start: "开始游戏 🔥", over: "游戏结束！💥", fail: "失败时的表情:", final: "最终得分", tryAgain: "再试一次 🔄", close: "关闭并保存", MOUTH_OPEN: "😮 张大嘴巴！", BLINK_LEFT: "😉 眨眨左眼！", BLINK_RIGHT: "😜 眨眨右眼！", BROWS_UP: "🤨 挑挑眉毛！", TILT_LEFT: "👈 头部向左倾斜！", TILT_RIGHT: "👉 头部向右倾斜！", success: "太棒了！⚡" },
+      ja: { ready: "準備完了！スタートを押して 🚀", start: "ゲームスタート 🔥", over: "ゲームオーバー！💥", fail: "負けたときのかお:", final: "最終スコア", tryAgain: "もう一度プレイ 🔄", close: "閉じて保存", MOUTH_OPEN: "😮 口を大きく開けて！", BLINK_LEFT: "😉 左目をウインク！", BLINK_RIGHT: "😜 右目をウインク！", BROWS_UP: "🤨 眉毛を上げて！", TILT_LEFT: "👈 頭を左に傾けて！", TILT_RIGHT: "👉 頭を右に傾けて！", success: "すごい！⚡" },
+      ko: { ready: "준비 완료! 시작을 누르세요 🚀", start: "게임 시작 🔥", over: "게임 오버! 💥", fail: "패배했을 때의 얼굴:", final: "최종 점수", tryAgain: "다시 시도 🔄", close: "닫기 및 저장", MOUTH_OPEN: "😮 입을 크게 벌리세요!", BLINK_LEFT: "😉 왼쪽 눈 윙크!", BLINK_RIGHT: "😜 오른쪽 눈 윙크!", BROWS_UP: "🤨 눈썹을 올리세요!", TILT_LEFT: "👈 머리를 왼쪽으로 기울이세요!", TILT_RIGHT: "👉 머리를 오른쪽으로 기울이세요!", success: "나이스! ⚡" },
+      ar: { ready: "جاهز! اضغط ابدأ اللعب 🚀", start: "ابدأ اللعب 🔥", over: "انتهت اللعبة! 💥", fail: "وجهك عند الخسارة:", final: "النتيجة النهائية", tryAgain: "محاولة أخرى 🔄", close: "إغلاق وحفظ", MOUTH_OPEN: "😮 افتح فمك واسعاً!", BLINK_LEFT: "😉 غمزة بالعين اليسرى!", BLINK_RIGHT: "😜 غمزة بالعين اليمنى!", BROWS_UP: "🤨 ارفع حواجبك!", TILT_LEFT: "👈 أمل رأسك لليسار!", TILT_RIGHT: "👉 أمل رأسك لليمين!", success: "ممتاز! ⚡" },
+      tr: { ready: "HAZIR! BAŞLA'YA BASIN 🚀", start: "OYUNU BAŞLAT 🔥", over: "OYUN BİTTİ! 💥", fail: "Kaybettiğindeki yüzün:", final: "Toplam Skor", tryAgain: "TEKRAR DENEYİN 🔄", close: "KAPAT VE KAYDET", MOUTH_OPEN: "😮 AĞZINI AÇ!", BLINK_LEFT: "😉 SOL GÖZÜNÜ KIRP!", BLINK_RIGHT: "😜 SAĞ GÖZÜNÜ KIRP!", BROWS_UP: "🤨 KAŞLARINI KALDIR!", TILT_LEFT: "👈 BAŞINI SOLA EĞ!", TILT_RIGHT: "👉 BAŞINI SAĞA EĞ!", success: "HARİKA! ⚡" },
+      nl: { ready: "KLAAR! DRUK OP START 🚀", start: "START SPEL 🔥", over: "GAME OVER! 💥", fail: "Je gezicht bij verlies:", final: "Eindscore", tryAgain: "OPNIEUW PROBEREN 🔄", close: "SLUITEN & OPSLAAN", MOUTH_OPEN: "😮 OPEN JE MOND!", BLINK_LEFT: "😉 KNIPOOG LINKS!", BLINK_RIGHT: "😜 KNIPOOG RECHTS!", BROWS_UP: "🤨 TREK JE WENKBRAUWEN OP!", TILT_LEFT: "👈 KANTEL HOOFD LINKS!", TILT_RIGHT: "👉 KANTEL HOOFD RECHTS!", success: "GEWELDIG! ⚡" },
+      pl: { ready: "GOTOWY! NACIŚNIJ START 🚀", start: "ROZPOCZNIJ GRĘ 🔥", over: "KONIEC GRY! 💥", fail: "Twoja twarz po przegranej:", final: "Wynik Końcowy", tryAgain: "SPRÓBUJ PONOWNIE 🔄", close: "ZAMKNIJ I ZAPISZ", MOUTH_OPEN: "😮 OTWÓRZ UST A!", BLINK_LEFT: "😉 MIGNIJ LEWYM OKIEM!", BLINK_RIGHT: "😜 MIGNIJ PRAWYM OKIEM!", BROWS_UP: "🤨 PODNIEŚ BRWI!", TILT_LEFT: "👈 PRZECHYL GŁOWĘ W LEWO!", TILT_RIGHT: "👉 PRZECHYL GŁOWĘ W PRAWO!", success: "SUPER! ⚡" },
+      sv: { ready: "REDO! TRYCK PÅ START 🚀", start: "STARTA SPELET 🔥", over: "GAME OVER! 💥", fail: "Ditt ansikte vid förlust:", final: "Slutpoäng", tryAgain: "BÖRJA OM 🔄", close: "STÄNG OCH SPARA", MOUTH_OPEN: "😮 ÖPPNA MUNNEN!", BLINK_LEFT: "😉 BLINKA MED VÄNSTER ÖGA!", BLINK_RIGHT: "😜 BLINKA MED HÖGER ÖGA!", BROWS_UP: "🤨 HÖJ ÖGONBRYNEN!", TILT_LEFT: "👈 LUTA HUVUDET ÅT VÄNSTER!", TILT_RIGHT: "👉 LUTA HUVUDET ÅT HÖGER!", success: "BRA! ⚡" },
+      hi: { ready: "तैयार! स्टार्ट दबाएं 🚀", start: "गेम शुरू करें 🔥", over: "गेम ओवर! 💥", fail: "हारने पर आपका चेहरा:", final: "अंतिम स्कोर", tryAgain: "पुनः प्रयास करें 🔄", close: "बंद करें और सहेजें", MOUTH_OPEN: "😮 अपना मुंह खोलें!", BLINK_LEFT: "😉 बाईं आंख मारें!", BLINK_RIGHT: "😜 दाईं आंख मारें!", BROWS_UP: "🤨 भौहें उठाएं!", TILT_LEFT: "👈 सिर बाईं ओर झुकाएं!", TILT_RIGHT: "👉 सिर दाईं ओर झुकाएं!", success: "शानदार! ⚡" },
+      id: { ready: "SIAP! TEKAN START 🚀", start: "MULAI GAME 🔥", over: "GAME OVER! 💥", fail: "Wajahmu saat kalah:", final: "Skor Akhir", tryAgain: "COBA LAGI 🔄", close: "TUTUP & SIMPAN", MOUTH_OPEN: "😮 BUKA MULUTMU!", BLINK_LEFT: "😉 KEDIPKAN MATA KIRI!", BLINK_RIGHT: "😜 KEDIPKAN MATA KANAN!", BROWS_UP: "🤨 ANGKAT ALISMU!", TILT_LEFT: "👈 MIRINGKAN KEPALA KE KIRI!", TILT_RIGHT: "👉 MIRINGKAN KEPALA KE KANAN!", success: "KEREN! ⚡" },
+      vi: { ready: "SẴN SÀNG! BẤM START 🚀", start: "BẮT ĐẦU 🔥", over: "TRÒ CHƠI KẾT THÚC! 💥", fail: "Khuôn mặt khi thua:", final: "Điểm Số Cuối Cùng", tryAgain: "THỬ LẠI 🔄", close: "ĐÓNG & LƯU", MOUTH_OPEN: "😮 HÁ MIỆNG RA!", BLINK_LEFT: "😉 NHÁY MẮT TRÁI!", BLINK_RIGHT: "😜 NHÁY MẮT PHẢI!", BROWS_UP: "🤨 NHƯỚNG LÔNG MÀY!", TILT_LEFT: "👈 NGHIÊNG ĐẦU SANG TRÁI!", TILT_RIGHT: "👉 NGHIÊNG ĐẦU SANG PHẢI!", success: "TUỆT VỜI! ⚡" },
+      th: { ready: "พร้อมแล้ว! กดสตาร์ท 🚀", start: "เริ่มเกม 🔥", over: "จบเกม! 💥", fail: "ใบหน้าของคุณเมื่อแพ้:", final: "คะแนนสุดท้าย", tryAgain: "ลองอีกครั้ง 🔄", close: "ปิดและบันทึก", MOUTH_OPEN: "😮 อ้าปาก!", BLINK_LEFT: "😉 ขยิบตาซ้าย!", BLINK_RIGHT: "😜 ขยิบตาขวา!", BROWS_UP: "🤨 ยักคิ้ว!", TILT_LEFT: "👈 เอียงศีรษะไปทางซ้าย!", TILT_RIGHT: "👉 เอียงศีรษะไปทางขวา!", success: "ยอดเยี่ยม! ⚡" },
+      cs: { ready: "PŘIPRAVEN! STISKNĚTE START 🚀", start: "SPUSTIT HRU 🔥", over: "KONEC HRY! 💥", fail: "Tvoje tvář při prohře:", final: "Konečné Skóre", tryAgain: "ZKUSIT ZNOVU 🔄", close: "ZAVŘÍT A ULOŽIT", MOUTH_OPEN: "😮 OTEVŘI ÚSTA!", BLINK_LEFT: "😉 MRKNI LEVÝM OKEM!", BLINK_RIGHT: "😜 MRKNI PRAVÝM OKEM!", BROWS_UP: "🤨 ZVEDNI OBOČÍ!", TILT_LEFT: "👈 NAKLOŇ HLAVU DOLEVA!", TILT_RIGHT: "👉 NAKLOŇ HLAVU DOPRAVA!", success: "SKVĚLE! ⚡" },
+      el: { ready: "ETOIMOI! ПIΕΣΤΕ START 🚀", start: "ENARXI PAICHNIDIOU 🔥", over: "TELOS PAICHNIDIOU! 💥", fail: "To prosopo sou otan chanis:", final: "Teliko Skor", tryAgain: "DOKIMASTE XANA 🔄", close: "KLEISIMO & APOTHIKEUSI", MOUTH_OPEN: "😮 ANOIXTE TO STOMA!", BLINK_LEFT: "😉 KLEISTE TO ARISTERO MATI!", BLINK_RIGHT: "😜 KLEISTE TO DEXI MATI!", BROWS_UP: "🤨 SIKONONTE TA FRYDIA!", TILT_LEFT: "👈 GERTE TO KEFALI ARISTERA!", TILT_RIGHT: "👉 GERTE TO KEFALI DEXIA!", success: "TELEIA! ⚡" },
+      he: { ready: "מוכן! לחץ התחל 🚀", start: "התחל משחק 🔥", over: "המשחק הסתיים! 💥", fail: "הפרצוף שלך כשהפסדת:", final: "ניקוד סופי", tryAgain: "נסה שוב 🔄", close: "סגור ושמור", MOUTH_OPEN: "😮 פתח את הפה!", BLINK_LEFT: "😉 קרוץ בעין שמאל!", BLINK_RIGHT: "😜 קרוץ בעין ימין!", BROWS_UP: "🤨 הרם גבות!", TILT_LEFT: "👈 הטה ראש שמאלה!", TILT_RIGHT: "👉 הטה ראש ימינה!", success: "מעולה! ⚡" },
+      ro: { ready: "PREGĂTIT! APASĂ START 🚀", start: "ÎNCEPE JOCUL 🔥", over: "JOC TERMINAT! 💥", fail: "Fața ta când pierzi:", final: "Scor Final", tryAgain: "ÎNCEARCĂ DIN NOU 🔄", close: "ÎNCHIDE ȘI SALVEAZĂ", MOUTH_OPEN: "😮 DESCHIDE GURA!", BLINK_LEFT: "😉 CLIPEȘTE CU OCHIUL STÂNG!", BLINK_RIGHT: "😜 CLIPEȘTE CU OCHIUL DREPT!", BROWS_UP: "🤨 RIDICĂ SPRÂNCEANACELE!", TILT_LEFT: "👈 APLEACĂ CAPUL LA STÂNGA!", TILT_RIGHT: "👉 APLEACĂ CAPUL LA DREAPTA!", success: "EXCELENT! ⚡" },
+      hu: { ready: "KÉSZ! NYOMD MEG A STARTOT 🚀", start: "JÁTÉK INDÍTÁSA 🔥", over: "JÁTÉK VÉGE! 💥", fail: "Az arcod amikor veszítesz:", final: "Végső Pontszám", tryAgain: "PRÓBÁLD ÚJRA 🔄", close: "BEZÁRÁS ÉS MENTÉS", MOUTH_OPEN: "😮 NYISD KI A SZÁD!", BLINK_LEFT: "😉 KACSINTS A BAL SZEMEDDEL!", BLINK_RIGHT: "😜 KACSINTS A JOBB SZEMEDDEL!", BROWS_UP: "🤨 HÚZD FEL A SZEMÖLDÖKÖD!", TILT_LEFT: "👈 DÖNTSD A FEJED BALRA!", TILT_RIGHT: "👉 DÖNTSD A FEJED JOBBRA!", success: "NAGYSZERŰ! ⚡" },
+      uk: { ready: "ГОТОВО! НАТИСНІТЬ СТАРТ 🚀", start: "ПОЧАТИ ГРУ 🔥", over: "ГРА ЗАКІНЧЕНА! 💥", fail: "Твоє обличчя при програші:", final: "Фінальний Рахунок", tryAgain: "СБУВАТИ ЗНОВУ 🔄", close: "ЗАКРИТИ ТА ЗБЕРЕГТИ", MOUTH_OPEN: "😮 ВІДКРИЙ РОТ!", BLINK_LEFT: "😉 МОРГНИ ЛІВИМ ОКОМ!", BLINK_RIGHT: "😜 МОРГНИ ПРАВИМ ОКОМ!", BROWS_UP: "🤨 ПІДНІМИ БРОВИ!", TILT_LEFT: "👈 НАХИЛИ ГОЛОВУ ЛІВОРУЧ!", TILT_RIGHT: "👉 НАХИЛИ ГОЛОВУ ПРАВОРУЧ!", success: "ЧУДОВО! ⚡" },
+      fi: { ready: "VALMIS! PAINA START 🚀", start: "ALOITA PELI 🔥", over: "PELI PÄÄTTYI! 💥", fail: "Kasvosi häviön hetkellä:", final: "Loppupisteet", tryAgain: "YRITÄ UUDELLEEN 🔄", close: "SULJE JA TALLENNA", MOUTH_OPEN: "😮 AVAA SUUSI!", BLINK_LEFT: "😉 ISKE VASENTA SILMÄÄ!", BLINK_RIGHT: "😜 ISKE OIKEAA SILMÄÄ!", BROWS_UP: "🤨 NOSTA KULMAKARVOJA!", TILT_LEFT: "👈 KALLISTA PÄÄTÄ VASEMMALLE!", TILT_RIGHT: "👉 KALLISTA PÄÄTÄ OIKEALLE!", success: "HIENO A! ⚡" },
+      no: { ready: "KLAR! TRYKK PÅ START 🚀", start: "START SPILLET 🔥", over: "GAME OVER! 💥", fail: "Ansiktet ditt ved tap:", final: "Sluttpoeng", tryAgain: "PRØV IGJEN 🔄", close: "LUKK OG LAGRE", MOUTH_OPEN: "😮 ÅPNE MUNNEN!", BLINK_LEFT: "😉 BLINK MED VENSTRE ØYE!", BLINK_RIGHT: "😜 BLINK MED HØYRE ØYE!", BROWS_UP: "🤨 LØFT ØYENBRYNENE!", TILT_LEFT: "👈 HELLE HODET TIL VENSTRE!", TILT_RIGHT: "👉 HELLE HODET TIL HØYRE!", success: "BRA! ⚡" },
+      da: { ready: "KLAR! TRYK PÅ START 🚀", start: "START SPILLET 🔥", over: "GAME OVER! 💥", fail: "Dit ansigt ved nederlag:", final: "Slutscore", tryAgain: "PRØV IGEN 🔄", close: "LUK OG GEM", MOUTH_OPEN: "😮 ÅBN MUNDEN!", BLINK_LEFT: "😉 BLINK MED VENSTRE ØJE!", BLINK_RIGHT: "😜 BLINK MED HØJRE ØJE!", BROWS_UP: "🤨 LØFT ØJENBRYNENE!", TILT_LEFT: "👈 HÆLD HOVEDET TIL VENSTRE!", TILT_RIGHT: "👉 HÆLD HOVEDET TIL HØJRE!", success: "GODT! ⚡" },
+      ms: { ready: "BERSEDIA! TEKAN START 🚀", start: "MULA GAME 🔥", over: "GAME OVER! 💥", fail: "Muka anda bila kalah:", final: "Markah Akhir", tryAgain: "CUBA LAGI 🔄", close: "TUTUP & SIMPAN", MOUTH_OPEN: "😮 BUKA MULUT!", BLINK_LEFT: "😉 KELIP MATA KIRI!", BLINK_RIGHT: "😜 KELIP MATA KANAN!", BROWS_UP: "🤨 ANGKAT KENING!", TILT_LEFT: "👈 SENGETKAN KEPALA KE KIRI!", TILT_RIGHT: "👉 SENGETKAN KEPALA KE KANAN!", success: "HEBAT! ⚡" },
+      fa: { ready: "آماده! استارت را بزنید 🚀", start: "شروع بازی 🔥", over: "پایان بازی! 💥", fail: "چهره شما هنگام باخت:", final: "امتیاز نهایی", tryAgain: "تلاش مجدد 🔄", close: "בبستن و ذخیره", MOUTH_OPEN: "😮 دهانت را باز کن!", BLINK_LEFT: "😉 چشم چپ را چشمک بزن!", BLINK_RIGHT: "😜 چشم راست را چشمک بزن!", BROWS_UP: "🤨 ابروها را بالا ببر!", TILT_LEFT: "👈 سر را به چپ خم کن!", TILT_RIGHT: "👉 سر را به راست خم کن!", success: "عالی! ⚡" }
+    };
+
+    let currentLang = "en";
+
+    // Global Language UI update
+    window.changeLanguage = function(lang) {
+      currentLang = lang;
+      const t = translations[lang] || translations.en;
+
+      // Update text in UI
+      document.getElementById("start-btn").innerText = t.start;
+      document.getElementById("txt-gameover").innerText = t.over;
+      document.getElementById("txt-failsnap").innerText = t.fail;
+      document.getElementById("txt-finalscore").innerText = t.final;
+      document.getElementById("btn-tryagain").innerText = t.tryAgain;
+      document.querySelector("#settings-modal .btn").innerText = t.close;
+
+      if (gameState === "IDLE") {
+        document.getElementById("command-display").innerText = t.ready;
+      }
+      
+      // Update page direction for RTL languages
+      if (lang === 'ar' || lang === 'he' || lang === 'fa') {
+        document.documentElement.dir = "rtl";
+      } else {
+        document.documentElement.dir = "ltr";
+      }
+    };
+
+    window.openSettings = function() {
+      document.getElementById("settings-modal").style.display = "flex";
+    };
+
+    window.closeSettings = function() {
+      document.getElementById("settings-modal").style.display = "none";
+    };
+
+    // Camera & Logic Elements
     const video = document.getElementById("webcam");
     const mainCard = document.getElementById("main-card");
     const commandDisplay = document.getElementById("command-display");
@@ -196,7 +340,6 @@
     let timerInterval = null;
     let timeLimit = 2500;
 
-    // محاكاة مؤلف أصوات Web Audio API (بدون ملفات خارجية)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
     function playSound(type) {
@@ -207,8 +350,8 @@
       gain.connect(audioCtx.destination);
 
       if (type === 'success') {
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
         osc.start();
@@ -224,14 +367,7 @@
       }
     }
 
-    const commands = [
-      { id: "MOUTH_OPEN", text: "😮 افتح فمك واسعاً!" },
-      { id: "BLINK_LEFT", text: "😉 غمزة بالعين اليسرى!" },
-      { id: "BLINK_RIGHT", text: "😜 غمزة بالعين اليمنى!" },
-      { id: "BROWS_UP", text: "🤨 ارفع حواجبك لأعلى!" },
-      { id: "TILT_LEFT", text: "👈 أمل رأسك لليسار!" },
-      { id: "TILT_RIGHT", text: "👉 أمل رأسك لليمن!" }
-    ];
+    const commandKeys = ["MOUTH_OPEN", "BLINK_LEFT", "BLINK_RIGHT", "BROWS_UP", "TILT_LEFT", "TILT_RIGHT"];
 
     async function init() {
       const filesetResolver = await FilesetResolver.forVisionTasks(
@@ -251,7 +387,7 @@
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
       video.addEventListener("loadeddata", () => {
-        commandDisplay.innerText = "جاهز للانطلاق! 🚀";
+        changeLanguage("en"); // English as Default
         startBtn.style.display = "block";
         predictLoop();
       });
@@ -267,11 +403,12 @@
     };
 
     function nextRound() {
-      const nextCmd = commands[Math.floor(Math.random() * commands.length)];
-      currentCommand = nextCmd.id;
-      commandDisplay.innerText = nextCmd.text;
+      const randomKey = commandKeys[Math.floor(Math.random() * commandKeys.length)];
+      currentCommand = randomKey;
+      
+      const t = translations[currentLang] || translations.en;
+      commandDisplay.innerText = t[randomKey];
 
-      // تسريع اللعبة تدريجياً
       timeLimit = Math.max(1000, 2500 - (score * 90)); 
       startTimer();
     }
@@ -310,7 +447,8 @@
           highScoreText.innerText = highScore;
         }
         
-        commandDisplay.innerText = "رائع! ⚡";
+        const t = translations[currentLang] || translations.en;
+        commandDisplay.innerText = t.success;
         setTimeout(nextRound, 250);
       }
     }
@@ -328,10 +466,9 @@
           const blinkRight = shapes.find(s => s.categoryName === "eyeBlinkRight")?.score || 0;
           const browOuterUpLeft = shapes.find(s => s.categoryName === "browOuterUpLeft")?.score || 0;
 
-          // زوايا الرأس (إمالة الرأس)
           const matrix = results.facialTransformationMatrixes?.[0]?.data;
           let headTilt = 0;
-          if (matrix) headTilt = matrix[1]; // زاوية الدوران
+          if (matrix) headTilt = matrix[1];
 
           if (jawOpen > 0.45) checkSuccess("MOUTH_OPEN");
           else if (blinkLeft > 0.55 && blinkRight < 0.3) checkSuccess("BLINK_LEFT");
@@ -349,13 +486,11 @@
       gameState = "GAMEOVER";
       playSound('fail');
 
-      // التقاط صورة وجه اللاعب لحظة الخسارة
       snapshotCanvas.width = video.videoWidth;
       snapshotCanvas.height = video.videoHeight;
       const ctx = snapshotCanvas.getContext("2d");
       ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-      // اهتزاز واجهة اللعبة
       mainCard.classList.add("shake");
       setTimeout(() => mainCard.classList.remove("shake"), 400);
 

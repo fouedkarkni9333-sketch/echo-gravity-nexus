@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cyber Survival - مطاردة الوحوش</title>
+    <title>Cyber Survival - Monster Chase</title>
     <style>
         body {
             margin: 0;
@@ -38,11 +38,11 @@
             justify-content: space-between;
             align-items: center;
         }
-        #ui h1 { margin: 0; font-size: 16px; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
-        #ui p { margin: 0; font-size: 12px; color: #94a3b8; }
+        #ui h1 { margin: 0; font-size: 15px; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+        #ui p { margin: 0; font-size: 11px; color: #94a3b8; }
         
         #health-bar-container {
-            width: 120px; height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; border: 1px solid #334155;
+            width: 110px; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; border: 1px solid #334155; margin-top: 3px;
         }
         #health-bar {
             width: 100%; height: 100%; background: linear-gradient(90deg, #ef4444, #10b981); transition: width 0.2s;
@@ -71,7 +71,7 @@
             width: 70px; height: 70px;
             background: rgba(15, 23, 42, 0.9);
             border: 2px solid rgba(239, 68, 68, 0.7);
-            color: #ef4444; font-weight: bold; font-size: 14px;
+            color: #ef4444; font-weight: bold; font-size: 13px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
@@ -99,28 +99,28 @@
     <div id="canvas-container"></div>
     <div id="ui">
         <div>
-            <h1>Cyber Survival: مطاردة الرعب</h1>
-            <p id="score-txt">الوحوش المتبقية: 8 | النقاط: 0</p>
+            <h1>Cyber Survival</h1>
+            <p id="score-txt">Monsters: 8 | Score: 0</p>
         </div>
         <div>
-            <p style="margin-bottom:3px;">الصحة:</p>
+            <p>Health:</p>
             <div id="health-bar-container"><div id="health-bar"></div></div>
         </div>
     </div>
     
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
     <div class="action-btns">
-        <div class="action-btn" id="fire-btn">إطلاق</div>
-        <div class="action-btn" id="jump-btn" style="border-color: rgba(56, 189, 248, 0.7); color: #38bdf8;">قفز</div>
+        <div class="action-btn" id="fire-btn">FIRE</div>
+        <div class="action-btn" id="jump-btn" style="border-color: rgba(56, 189, 248, 0.7); color: #38bdf8;">JUMP</div>
     </div>
 
     <div id="end-screen">
         <h2 id="end-title">Game Over</h2>
-        <p id="end-desc">تم القضاء عليك بواسطة الوحوش!</p>
-        <button class="restart-btn" onclick="resetGame()">إعادة اللعب</button>
+        <p id="end-desc">You were defeated by the monsters!</p>
+        <button class="restart-btn" onclick="resetGame()">Play Again</button>
     </div>
 
-    <!-- مكتبات Three.js مع Post-Processing -->
+    <!-- Three.js Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -140,7 +140,6 @@
         let gameActive = true;
 
         const MAP_LIMIT = 80;
-        const PLAYER_RADIUS = 0.85;
 
         init();
         animate();
@@ -152,7 +151,7 @@
 
             camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
             
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
@@ -170,7 +169,6 @@
             redLight.castShadow = true;
             scene.add(redLight);
 
-            // إيجاد الأرضية الحلبة
             const groundGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
             const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
             const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -178,7 +176,6 @@
             ground.receiveShadow = true;
             scene.add(ground);
 
-            // بطل اللعبة (منظور ثالث)
             playerObj = createHumanoidCharacter(0x38bdf8, 0x0f172a, 0x0284c7);
             scene.add(playerObj.group);
 
@@ -341,11 +338,11 @@
             let desc = document.getElementById('end-desc');
 
             if (won) {
-                title.style.color = '#10b981'; title.innerText = "انتصار ساحق!";
-                desc.innerText = "لقد قضيت على جميع الوحوش بنجاح!";
+                title.style.color = '#10b981'; title.innerText = "Victory!";
+                desc.innerText = "You successfully defeated all the monsters!";
             } else {
-                title.style.color = '#ef4444'; title.innerText = "انتهت اللعبة!";
-                desc.innerText = "افترستك الوحوش.. أعد المحاولة واستخدم مهارة الهرب والإطلاق!";
+                title.style.color = '#ef4444'; title.innerText = "Game Over";
+                desc.innerText = "You were caught by the monsters! Try again.";
             }
             screen.style.display = 'flex';
         }
@@ -361,7 +358,7 @@
             monsters.forEach(m => scene.remove(m.mesh));
             monsters = [];
             spawnMonsters(8);
-            document.getElementById('score-txt').innerText = `الوحوش المتبقية: 8 | النقاط: 0`;
+            document.getElementById('score-txt').innerText = `Monsters: 8 | Score: 0`;
         }
 
         function animate() {
@@ -386,7 +383,6 @@
             if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
             playerObj.group.position.copy(playerPos);
 
-            // تحديث الطلقات والتصادم مع الوحوش
             for (let i = bullets.length - 1; i >= 0; i--) {
                 let b = bullets[i];
                 b.mesh.position.addScaledVector(b.dir, 1.2);
@@ -402,7 +398,7 @@
                             scene.remove(m.mesh);
                             monsters.splice(j, 1);
                             score += 50;
-                            document.getElementById('score-txt').innerText = `الوحوش المتبقية: ${monsters.length} | النقاط: ${score}`;
+                            document.getElementById('score-txt').innerText = `Monsters: ${monsters.length} | Score: ${score}`;
                             if (monsters.length === 0) endGame(true);
                         }
                         break;
@@ -415,13 +411,11 @@
                 }
             }
 
-            // ذكاء اصطناعي للوحوش (المطاردة)
             monsters.forEach(m => {
                 let dirToPlayer = playerPos.clone().sub(m.mesh.position).normalize();
-                m.mesh.position.addScaledVector(dirToPlayer, 0.08); // سرعة مطاردة الوحش
+                m.mesh.position.addScaledVector(dirToPlayer, 0.08);
                 m.mesh.lookAt(playerPos.x, m.mesh.position.y, playerPos.z);
 
-                // إلحاق الضرر باللاعب عند الاقتراب
                 if (m.mesh.position.distanceTo(playerPos) < 1.3) {
                     playerHealth -= 0.5;
                     document.getElementById('health-bar').style.width = `${Math.max(0, playerHealth)}%`;
@@ -429,7 +423,6 @@
                 }
             });
 
-            // كاميرا المنظور الثالث
             let camDistance = 10;
             let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
             let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2.5;

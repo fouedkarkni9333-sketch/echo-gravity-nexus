@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Reaction Blitz ⚡ - اللعبة الكاملة</title>
+  <title>Face Reaction Blitz ⚡ - Pro Edition</title>
   <style>
     * {
       box-sizing: border-box;
@@ -11,7 +11,7 @@
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0f172a;
+      background: #090d16;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -20,38 +20,52 @@
       min-height: 100vh;
       margin: 0;
       padding: 10px;
+      overflow: hidden;
     }
+
+    /* تأثير اهتزاز الشاشة */
+    .shake {
+      animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
     .game-card {
       background: #1e293b;
       border: 3px solid #38bdf8;
-      border-radius: 16px;
+      border-radius: 20px;
       padding: 20px;
       width: 100%;
-      max-width: 500px;
+      max-width: 480px;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
       position: relative;
     }
     .score-board {
       display: flex;
       justify-content: space-between;
       font-size: 1.2rem;
-      font-weight: bold;
+      font-weight: 800;
       margin-bottom: 15px;
       background: #0f172a;
-      padding: 10px 20px;
-      border-radius: 10px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid #334155;
     }
     .camera-box {
       position: relative;
       width: 100%;
-      height: 280px;
-      border-radius: 12px;
+      height: 300px;
+      border-radius: 14px;
       overflow: hidden;
       border: 2px solid #475569;
       background: #000;
     }
-    video {
+    video, canvas {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -62,21 +76,22 @@
       top: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.9);
       border: 2px solid #facc15;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 30px;
-      font-size: 1.4rem;
-      font-weight: 800;
+      font-size: 1.3rem;
+      font-weight: 900;
       color: #facc15;
       white-space: nowrap;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      transition: all 0.2s ease;
     }
     .timer-bar-container {
       width: 100%;
-      height: 12px;
+      height: 14px;
       background: #334155;
-      border-radius: 6px;
+      border-radius: 7px;
       margin-top: 15px;
       overflow: hidden;
     }
@@ -84,42 +99,53 @@
       width: 100%;
       height: 100%;
       background: #4ade80;
-      transition: width 0.1s linear, background-color 0.3s;
+      transition: width 0.05s linear, background-color 0.2s;
     }
     .btn {
       background: #38bdf8;
       color: #0f172a;
       border: none;
       padding: 14px 28px;
-      font-size: 1.3rem;
-      font-weight: bold;
-      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      border-radius: 12px;
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 15px;
       transition: all 0.2s;
       width: 100%;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
     }
     .btn:hover {
       background: #7dd3fc;
-      transform: scale(1.02);
+      transform: translateY(-2px);
     }
     .game-over-screen {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 20px;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
       z-index: 10;
     }
+    .fail-snapshot {
+      width: 160px;
+      height: 120px;
+      border-radius: 10px;
+      border: 3px solid #ef4444;
+      margin: 10px 0;
+      object-fit: cover;
+      transform: scaleX(-1);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
   </style>
 </head>
 <body>
 
-  <div class="game-card">
+  <div class="game-card" id="main-card">
     <div class="score-board">
       <div>النقاط: <span id="score" style="color:#38bdf8;">0</span></div>
       <div>أعلى نتيجة: <span id="high-score" style="color:#facc15;">0</span></div>
@@ -127,27 +153,31 @@
 
     <div class="camera-box">
       <video id="webcam" autoplay playsinline></video>
-      <div class="command-overlay" id="command-display">اضغط ابدأ اللعب 🚀</div>
+      <div class="command-overlay" id="command-display">جاري التحميل... ⏳</div>
     </div>
 
     <div class="timer-bar-container">
       <div class="timer-bar" id="timer-bar"></div>
     </div>
 
-    <button class="btn" id="start-btn" onclick="startGame()">ابدأ اللعب الآن 🎮</button>
+    <button class="btn" id="start-btn" onclick="startGame()" style="display:none;">ابدأ التحدي 🔥</button>
 
-    <!-- شاشة انتهاء اللعبة -->
+    <!-- شاشة الخسارة -->
     <div class="game-over-screen" id="game-over">
-      <h2 style="color: #ef4444; font-size: 2rem; margin-bottom: 5px;">خسرت! 💥</h2>
-      <p style="font-size: 1.2rem; margin-bottom: 20px;">نتيجة الجولة: <span id="final-score" style="color:#38bdf8; font-weight:bold;">0</span></p>
-      <button class="btn" onclick="startGame()">إعادة المحاولة 🔄</button>
+      <h2 style="color: #ef4444; font-size: 2.2rem; margin: 0;">خسرت! 💥</h2>
+      <p style="margin: 5px 0; color: #94a3b8;">تعبير وجهك عند الخسارة:</p>
+      <canvas id="snapshot-canvas" class="fail-snapshot"></canvas>
+      <p style="font-size: 1.3rem; margin: 10px 0;">النتيجة النهائية: <span id="final-score" style="color:#38bdf8; font-weight:bold;">0</span></p>
+      <button class="btn" onclick="startGame()">محاولة أخرى 🔄</button>
     </div>
   </div>
 
   <script type="module">
     import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
+    // العناصر
     const video = document.getElementById("webcam");
+    const mainCard = document.getElementById("main-card");
     const commandDisplay = document.getElementById("command-display");
     const timerBar = document.getElementById("timer-bar");
     const scoreText = document.getElementById("score");
@@ -155,26 +185,55 @@
     const finalScoreText = document.getElementById("final-score");
     const gameOverScreen = document.getElementById("game-over");
     const startBtn = document.getElementById("start-btn");
+    const snapshotCanvas = document.getElementById("snapshot-canvas");
 
     let faceLandmarker;
     let lastVideoTime = -1;
-    let gameState = "IDLE"; // IDLE, PLAYING, GAMEOVER
+    let gameState = "IDLE";
     let score = 0;
     let highScore = 0;
     let currentCommand = null;
     let timerInterval = null;
-    let timeLeft = 100;
-    let timeLimit = 2500; // وقت الحركة (2.5 ثانية)
+    let timeLimit = 2500;
+
+    // محاكاة مؤلف أصوات Web Audio API (بدون ملفات خارجية)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'success') {
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } else if (type === 'fail') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
 
     const commands = [
       { id: "MOUTH_OPEN", text: "😮 افتح فمك واسعاً!" },
-      { id: "BLINK_BOTH", text: "😑 أغمض عينيك الاثنين!" },
       { id: "BLINK_LEFT", text: "😉 غمزة بالعين اليسرى!" },
-      { id: "BLINK_RIGHT", text: "😜 غمزة بالعين اليمنى!" }
+      { id: "BLINK_RIGHT", text: "😜 غمزة بالعين اليمنى!" },
+      { id: "BROWS_UP", text: "🤨 ارفع حواجبك لأعلى!" },
+      { id: "TILT_LEFT", text: "👈 أمل رأسك لليسار!" },
+      { id: "TILT_RIGHT", text: "👉 أمل رأسك لليمن!" }
     ];
 
     async function init() {
-      commandDisplay.innerText = "جاري تحميل محرك الذكاء الاصطناعي...";
       const filesetResolver = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
       );
@@ -192,14 +251,14 @@
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
       video.addEventListener("loadeddata", () => {
-        commandDisplay.innerText = "جاهز! اضغط ابدأ اللعب 🚀";
+        commandDisplay.innerText = "جاهز للانطلاق! 🚀";
+        startBtn.style.display = "block";
         predictLoop();
       });
     }
 
     window.startGame = function() {
       score = 0;
-      timeLimit = 2500;
       scoreText.innerText = score;
       gameOverScreen.style.display = "none";
       startBtn.style.display = "none";
@@ -208,14 +267,12 @@
     };
 
     function nextRound() {
-      // اختيار أمر عشوائي جديد مقتطع عن السابقتين
       const nextCmd = commands[Math.floor(Math.random() * commands.length)];
       currentCommand = nextCmd.id;
       commandDisplay.innerText = nextCmd.text;
 
-      // تقليل الوقت تدريجياً لزيادة الصعوبة مع زيادة النقاط
-      timeLimit = Math.max(1200, 2500 - (score * 80)); 
-      
+      // تسريع اللعبة تدريجياً
+      timeLimit = Math.max(1000, 2500 - (score * 90)); 
       startTimer();
     }
 
@@ -230,13 +287,9 @@
         
         timerBar.style.width = (remainingRatio * 100) + "%";
         
-        if (remainingRatio > 0.5) {
-          timerBar.style.backgroundColor = "#4ade80";
-        } else if (remainingRatio > 0.2) {
-          timerBar.style.backgroundColor = "#facc15";
-        } else {
-          timerBar.style.backgroundColor = "#ef4444";
-        }
+        if (remainingRatio > 0.5) timerBar.style.backgroundColor = "#4ade80";
+        else if (remainingRatio > 0.2) timerBar.style.backgroundColor = "#facc15";
+        else timerBar.style.backgroundColor = "#ef4444";
 
         if (elapsed >= timeLimit) {
           endGame();
@@ -249,6 +302,7 @@
 
       if (detectedAction === currentCommand) {
         clearInterval(timerInterval);
+        playSound('success');
         score++;
         scoreText.innerText = score;
         if (score > highScore) {
@@ -256,9 +310,8 @@
           highScoreText.innerText = highScore;
         }
         
-        // تأثير بصري سريع للتأكيد
-        commandDisplay.innerText = "ممتاز! ⚡";
-        setTimeout(nextRound, 300);
+        commandDisplay.innerText = "رائع! ⚡";
+        setTimeout(nextRound, 250);
       }
     }
 
@@ -273,16 +326,19 @@
           const jawOpen = shapes.find(s => s.categoryName === "jawOpen")?.score || 0;
           const blinkLeft = shapes.find(s => s.categoryName === "eyeBlinkLeft")?.score || 0;
           const blinkRight = shapes.find(s => s.categoryName === "eyeBlinkRight")?.score || 0;
+          const browOuterUpLeft = shapes.find(s => s.categoryName === "browOuterUpLeft")?.score || 0;
 
-          if (jawOpen > 0.45) {
-            checkSuccess("MOUTH_OPEN");
-          } else if (blinkLeft > 0.5 && blinkRight > 0.5) {
-            checkSuccess("BLINK_BOTH");
-          } else if (blinkLeft > 0.55 && blinkRight < 0.3) {
-            checkSuccess("BLINK_LEFT");
-          } else if (blinkRight > 0.55 && blinkLeft < 0.3) {
-            checkSuccess("BLINK_RIGHT");
-          }
+          // زوايا الرأس (إمالة الرأس)
+          const matrix = results.facialTransformationMatrixes?.[0]?.data;
+          let headTilt = 0;
+          if (matrix) headTilt = matrix[1]; // زاوية الدوران
+
+          if (jawOpen > 0.45) checkSuccess("MOUTH_OPEN");
+          else if (blinkLeft > 0.55 && blinkRight < 0.3) checkSuccess("BLINK_LEFT");
+          else if (blinkRight > 0.55 && blinkLeft < 0.3) checkSuccess("BLINK_RIGHT");
+          else if (browOuterUpLeft > 0.45) checkSuccess("BROWS_UP");
+          else if (headTilt > 0.15) checkSuccess("TILT_LEFT");
+          else if (headTilt < -0.15) checkSuccess("TILT_RIGHT");
         }
       }
       requestAnimationFrame(predictLoop);
@@ -291,6 +347,18 @@
     function endGame() {
       clearInterval(timerInterval);
       gameState = "GAMEOVER";
+      playSound('fail');
+
+      // التقاط صورة وجه اللاعب لحظة الخسارة
+      snapshotCanvas.width = video.videoWidth;
+      snapshotCanvas.height = video.videoHeight;
+      const ctx = snapshotCanvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+
+      // اهتزاز واجهة اللعبة
+      mainCard.classList.add("shake");
+      setTimeout(() => mainCard.classList.remove("shake"), 400);
+
       finalScoreText.innerText = score;
       gameOverScreen.style.display = "flex";
     }

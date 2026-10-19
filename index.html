@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Escape the Dark Maze - رعب الظلام</title>
+    <title>Cyber Survival - مطاردة الوحوش</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #000000;
+            background-color: #030712;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
@@ -26,25 +26,32 @@
             left: 15px;
             right: 15px;
             color: #f8fafc;
-            background: rgba(10, 10, 15, 0.9);
-            padding: 12px 18px;
-            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 12px 20px;
+            border-radius: 16px;
             border: 1px solid rgba(239, 68, 68, 0.5);
             pointer-events: none;
             z-index: 10;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 30px rgba(239,68,68,0.2);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        #ui h1 { margin: 0; font-size: 15px; color: #ef4444; text-shadow: 0 0 8px rgba(239,68,68,0.6); }
-        #ui p { margin: 0; font-size: 12px; color: #cbd5e1; }
+        #ui h1 { margin: 0; font-size: 16px; color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+        #ui p { margin: 0; font-size: 12px; color: #94a3b8; }
         
+        #health-bar-container {
+            width: 120px; height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; border: 1px solid #334155;
+        }
+        #health-bar {
+            width: 100%; height: 100%; background: linear-gradient(90deg, #ef4444, #10b981); transition: width 0.2s;
+        }
+
         #joystick-zone {
             position: absolute; bottom: 30px; left: 30px;
             width: 130px; height: 130px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             border: 2px solid rgba(239, 68, 68, 0.4);
             border-radius: 50%; z-index: 10;
             backdrop-filter: blur(8px);
@@ -54,176 +61,198 @@
             width: 50px; height: 50px;
             background: linear-gradient(135deg, #ef4444, #991b1b);
             border-radius: 50%; pointer-events: none;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
         }
-        
-        #game-over-screen {
+        .action-btns {
+            position: absolute; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; gap: 14px; z-index: 10;
+        }
+        .action-btn {
+            width: 70px; height: 70px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid rgba(239, 68, 68, 0.7);
+            color: #ef4444; font-weight: bold; font-size: 14px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        .action-btn:active { transform: scale(0.92); background: #ef4444; color: #ffffff; }
+
+        #end-screen {
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.92);
+            background: rgba(5, 8, 20, 0.95);
             z-index: 100; display: none;
             flex-direction: column; align-items: center; justify-content: center;
             color: #fff; text-align: center;
         }
-        #game-over-screen h2 { font-size: 32px; color: #ef4444; margin-bottom: 10px; text-shadow: 0 0 15px rgba(239,68,68,0.8); }
-        #game-over-screen p { font-size: 16px; color: #94a3b8; margin-bottom: 20px; }
+        #end-screen h2 { font-size: 36px; margin-bottom: 10px; }
         .restart-btn {
-            background: #ef4444; color: white; border: none; padding: 12px 30px;
-            font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer;
-            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.5);
+            background: #ef4444; color: white; border: none; padding: 14px 35px;
+            font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 5px 25px rgba(239, 68, 68, 0.5); margin-top: 15px;
         }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
-    
     <div id="ui">
         <div>
-            <h1>متاهة الظلام الدامس</h1>
-            <p id="status-txt">المفاتيح المتبقية: 3</p>
+            <h1>Cyber Survival: مطاردة الرعب</h1>
+            <p id="score-txt">الوحوش المتبقية: 8 | النقاط: 0</p>
         </div>
         <div>
-            <p id="timer-txt" style="color: #ef4444; font-weight: bold; font-size: 14px;">الوقت: 60ث</p>
+            <p style="margin-bottom:3px;">الصحة:</p>
+            <div id="health-bar-container"><div id="health-bar"></div></div>
         </div>
     </div>
-
+    
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
-
-    <div id="game-over-screen">
-        <h2 id="end-title">انتهى الوقت!</h2>
-        <p id="end-desc">لم تستطع الهروب من الظلام في الوقت المحدد.</p>
-        <button class="restart-btn" onclick="resetGame()">إعادة المحاولة</button>
+    <div class="action-btns">
+        <div class="action-btn" id="fire-btn">إطلاق</div>
+        <div class="action-btn" id="jump-btn" style="border-color: rgba(56, 189, 248, 0.7); color: #38bdf8;">قفز</div>
     </div>
 
-    <!-- مكتبة Three.js -->
+    <div id="end-screen">
+        <h2 id="end-title">Game Over</h2>
+        <p id="end-desc">تم القضاء عليك بواسطة الوحوش!</p>
+        <button class="restart-btn" onclick="resetGame()">إعادة اللعب</button>
+    </div>
+
+    <!-- مكتبات Three.js مع Post-Processing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
     <script>
-        let scene, camera, renderer;
+        let scene, camera, renderer, composer;
+        let playerObj = {};
         let moveVector = new THREE.Vector2(0, 0);
-        let playerPos = new THREE.Vector3(0, 0.8, 12);
-        let camYaw = 0, camPitch = 0;
-        let buildingBoxes = [];
-        let keys = [];
-        let keysLeft = 3;
-        let timeLeft = 60;
+        let playerVelocity = new THREE.Vector3();
+        let playerPos = new THREE.Vector3(0, 0, 0);
+        let camYaw = 0, camPitch = 0.35;
+        let monsters = [];
+        let bullets = [];
+        let playerHealth = 100;
+        let score = 0;
         let gameActive = true;
-        let timerInterval;
-        let flashlight;
 
-        const MAP_SIZE = 40;
-        const PLAYER_RADIUS = 0.5;
+        const MAP_LIMIT = 80;
+        const PLAYER_RADIUS = 0.85;
 
         init();
         animate();
 
         function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020205);
-            scene.fog = new THREE.FogExp2(0x020205, 0.08); // ضباب مظلم وكثيف يغطي الرؤية
+            scene.background = new THREE.Color(0x030712);
+            scene.fog = new THREE.FogExp2(0x030712, 0.015);
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.copy(playerPos);
-
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+            
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // إضاءة عامة خافتة جداً (ظلام دامس)
-            const ambientLight = new THREE.AmbientLight(0x0a0a12, 0.3);
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(new THREE.RenderPass(scene, camera));
+            composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.6, 0.4, 0.8));
+
+            const ambientLight = new THREE.AmbientLight(0x1e1b4b, 1.5);
             scene.add(ambientLight);
 
-            // مصباح يدوي مرعب مرتبط بكاميرا اللاعب
-            flashlight = new THREE.SpotLight(0xffedd5, 2.5, 25, Math.PI / 5, 0.5, 1);
-            flashlight.position.set(0, 0, 0);
-            scene.add(flashlight);
-            scene.add(flashlight.target);
+            const redLight = new THREE.DirectionalLight(0xef4444, 1.8);
+            redLight.position.set(50, 100, 50);
+            redLight.castShadow = true;
+            scene.add(redLight);
 
-            buildDarkMaze();
-            spawnKeys();
+            // إيجاد الأرضية الحلبة
+            const groundGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // بطل اللعبة (منظور ثالث)
+            playerObj = createHumanoidCharacter(0x38bdf8, 0x0f172a, 0x0284c7);
+            scene.add(playerObj.group);
+
+            spawnMonsters(8);
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
             });
 
             setupControls();
-            startTimer();
         }
 
-        function startTimer() {
-            timeLeft = 60;
-            gameActive = true;
-            document.getElementById('game-over-screen').style.display = 'none';
-            if (timerInterval) clearInterval(timerInterval);
+        function createHumanoidCharacter(shirtColor, pantsColor, hairColor) {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.45), new THREE.MeshStandardMaterial({ color: shirtColor }));
+            body.position.y = 1.25; body.castShadow = true; group.add(body);
 
-            timerInterval = setInterval(() => {
-                if (!gameActive) return;
-                timeLeft--;
-                document.getElementById('timer-txt').innerText = `الوقت: ${timeLeft}ث`;
-                if (timeLeft <= 0) {
-                    endGame(false);
-                }
-            }, 1000);
-        }
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            head.position.y = 2.1; head.castShadow = true; group.add(head);
 
-        function buildDarkMaze() {
-            // الأرضية
-            const floorGeo = new THREE.PlaneGeometry(MAP_SIZE * 2, MAP_SIZE * 2);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.9 });
-            const floor = new THREE.Mesh(floorGeo, floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            scene.add(floor);
-
-            // السقف
-            const ceiling = new THREE.Mesh(floorGeo, floorMat);
-            ceiling.rotation.x = Math.PI / 2;
-            ceiling.position.y = 4;
-            scene.add(ceiling);
-
-            // جدران المتاهة المظلمة
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.8 });
+            const armGeo = new THREE.BoxGeometry(0.24, 0.9, 0.24);
+            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
             
-            const wallConfigs = [
-                {w: 30, h: 4, d: 1, x: 0, z: -15},
-                {w: 1, h: 4, d: 30, x: -15, z: 0},
-                {w: 1, h: 4, d: 30, x: 15, z: 0},
-                {w: 30, h: 4, d: 1, x: 0, z: 15},
-                // جدران داخلية للمتاهة
-                {w: 12, h: 4, d: 1, x: -8, z: -5},
-                {w: 1, h: 4, d: 10, x: -2, z: 5},
-                {w: 10, h: 4, d: 1, x: 6, z: -6},
-                {w: 1, h: 4, d: 12, x: 7, z: 4},
-                {w: 8, h: 4, d: 1, x: -5, z: 8}
-            ];
+            const armLGroup = new THREE.Group();
+            let armLMesh = new THREE.Mesh(armGeo, armMat);
+            armLMesh.position.y = -0.35; armLGroup.add(armLMesh);
+            armLGroup.position.set(-0.54, 1.7, 0); group.add(armLGroup);
 
-            wallConfigs.forEach(cfg => {
-                let mesh = new THREE.Mesh(new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d), wallMat);
-                mesh.position.set(cfg.x, cfg.h / 2, cfg.z);
-                scene.add(mesh);
-                let box = new THREE.Box3().setFromObject(mesh);
-                buildingBoxes.push(box);
-            });
+            const armRGroup = new THREE.Group();
+            let armRMesh = new THREE.Mesh(armGeo, armMat);
+            armRMesh.position.y = -0.35; armRGroup.add(armRMesh);
+            armRGroup.position.set(0.54, 1.7, 0); group.add(armRGroup);
+
+            const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
+            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor });
+
+            const legLGroup = new THREE.Group();
+            let legLMesh = new THREE.Mesh(legGeo, legMat);
+            legLMesh.position.y = -0.45; legLGroup.add(legLMesh);
+            legLGroup.position.set(-0.2, 0.8, 0); group.add(legLGroup);
+
+            const legRGroup = new THREE.Group();
+            let legRMesh = new THREE.Mesh(legGeo, legMat);
+            legRMesh.position.y = -0.45; legRGroup.add(legRMesh);
+            legRGroup.position.set(0.2, 0.8, 0); group.add(legRGroup);
+
+            return { group, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
         }
 
-        function spawnKeys() {
-            const keyGeo = new THREE.OctahedronGeometry(0.4);
-            const keyMat = new THREE.MeshBasicMaterial({ color: 0xeab308 }); // مفتاح ذهبي مضيء
+        function createMonster() {
+            const group = new THREE.Group();
+            const bodyMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.6, 0.8), bodyMat);
+            body.position.y = 1.0; group.add(body);
 
-            const positions = [
-                {x: -12, z: -12},
-                {x: 12, z: -10},
-                {x: -10, z: 12}
-            ];
+            const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.2, 0.2), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            eyes.position.set(0, 1.4, 0.45); group.add(eyes);
 
-            positions.forEach(pos => {
-                let keyMesh = new THREE.Mesh(keyGeo, keyMat);
-                keyMesh.position.set(pos.x, 0.8, pos.z);
-                scene.add(keyMesh);
-                keys.push(keyMesh);
-            });
+            return group;
+        }
+
+        function spawnMonsters(count) {
+            for (let i = 0; i < count; i++) {
+                let monsterMesh = createMonster();
+                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
+                if (Math.abs(rx) < 10) rx = 20;
+                monsterMesh.position.set(rx, 0, rz);
+                scene.add(monsterMesh);
+                monsters.push({ mesh: monsterMesh, hp: 30 });
+            }
         }
 
         function setupControls() {
@@ -257,112 +286,159 @@
                 moveVector.set(-dx / maxD, -dy / maxD);
             }
 
-            // تدوير الكاميرا عبر السحب في الشاشة
             let dragging = false, px = 0, py = 0;
             window.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#joystick-zone')) return;
+                if (e.target.closest('#joystick-zone') || e.target.closest('.action-btns')) return;
                 dragging = true; px = e.touches[0].clientX; py = e.touches[0].clientY;
             });
             window.addEventListener('touchmove', (e) => {
                 if (!dragging) return;
                 let t = Array.from(e.touches).find(item => item.clientX > window.innerWidth / 3);
                 if (!t) return;
-                camYaw -= (t.clientX - px) * 0.004;
+                camYaw -= (t.clientX - px) * 0.005;
                 camPitch -= (t.clientY - py) * 0.003;
-                camPitch = Math.max(-0.4, Math.min(0.4, camPitch)); // تقييد النظر للأعلى والأسفل
+                camPitch = Math.max(0.1, Math.min(1.0, camPitch));
                 px = t.clientX; py = t.clientY;
             });
             window.addEventListener('touchend', () => { dragging = false; });
+
+            document.getElementById('jump-btn').addEventListener('touchstart', () => {
+                if (playerPos.y <= 0.01) playerVelocity.y = 0.22;
+            });
+
+            document.getElementById('fire-btn').addEventListener('touchstart', () => {
+                if (!gameActive) return;
+                playerObj.armR.rotation.x = -Math.PI / 2;
+                setTimeout(() => playerObj.armR.rotation.x = 0, 150);
+
+                let bullet = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+                bullet.position.copy(playerPos).add(new THREE.Vector3(0, 1.4, 0));
+                
+                let dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).normalize();
+                bullets.push({ mesh: bullet, dir: dir, life: 60 });
+                scene.add(bullet);
+            });
         }
 
-        function checkCollision(pos) {
-            let testBox = new THREE.Box3(
-                new THREE.Vector3(pos.x - PLAYER_RADIUS, 0, pos.z - PLAYER_RADIUS),
-                new THREE.Vector3(pos.x + PLAYER_RADIUS, 2, pos.z + PLAYER_RADIUS)
-            );
-            for (let box of buildingBoxes) {
-                if (box.intersectsBox(testBox)) return true;
+        function updateLimbAnimation(charObj, isMoving) {
+            if (isMoving) {
+                charObj.walkTimer += 0.25;
+                let swing = Math.sin(charObj.walkTimer) * 0.7;
+                charObj.legL.rotation.x = swing;
+                charObj.legR.rotation.x = -swing;
+                charObj.armL.rotation.x = -swing;
+                charObj.armR.rotation.x = swing;
+            } else {
+                charObj.legL.rotation.x = 0; charObj.legR.rotation.x = 0;
+                charObj.armL.rotation.x = 0; charObj.armR.rotation.x = 0;
             }
-            return false;
         }
 
         function endGame(won) {
             gameActive = false;
-            clearInterval(timerInterval);
-            let screen = document.getElementById('game-over-screen');
+            let screen = document.getElementById('end-screen');
             let title = document.getElementById('end-title');
             let desc = document.getElementById('end-desc');
 
             if (won) {
-                title.style.color = '#10b981';
-                title.innerText = "لقد نجوت!";
-                desc.innerText = "هنيئاً لك، جمعت كل المفاتيح وهربت من المتاهة المظلمة!";
+                title.style.color = '#10b981'; title.innerText = "انتصار ساحق!";
+                desc.innerText = "لقد قضيت على جميع الوحوش بنجاح!";
             } else {
-                title.style.color = '#ef4444';
-                title.innerText = "انتهى الوقت!";
-                desc.innerText = "ابتلعك الظلام.. حاول مرة أخرى بسرعة!";
+                title.style.color = '#ef4444'; title.innerText = "انتهت اللعبة!";
+                desc.innerText = "افترستك الوحوش.. أعد المحاولة واستخدم مهارة الهرب والإطلاق!";
             }
             screen.style.display = 'flex';
         }
 
         function resetGame() {
-            playerPos.set(0, 0.8, 12);
-            camYaw = 0; camPitch = 0;
-            keysLeft = 3;
-            document.getElementById('status-txt').innerText = `المفاتيح المتبقية: ${keysLeft}`;
+            playerHealth = 100;
+            score = 0;
+            gameActive = true;
+            playerPos.set(0, 0, 0);
+            document.getElementById('health-bar').style.width = '100%';
+            document.getElementById('end-screen').style.display = 'none';
             
-            // إعادة توزيع المفاتيح
-            keys.forEach(k => scene.remove(k));
-            keys = [];
-            spawnKeys();
-            startTimer();
+            monsters.forEach(m => scene.remove(m.mesh));
+            monsters = [];
+            spawnMonsters(8);
+            document.getElementById('score-txt').innerText = `الوحوش المتبقية: 8 | النقاط: 0`;
         }
 
         function animate() {
             requestAnimationFrame(animate);
             if (!gameActive) return;
 
-            let speed = 0.12;
-            if (moveVector.length() > 0) {
+            let isMoving = moveVector.length() > 0;
+            let speed = 0.20;
+
+            if (isMoving) {
                 let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.y).normalize();
                 moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
 
-                let nextX = new THREE.Vector3(playerPos.x + moveDir.x * speed, playerPos.y, playerPos.z);
-                let nextZ = new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDir.z * speed);
-
-                if (!checkCollision(nextX)) playerPos.x = nextX.x;
-                if (!checkCollision(nextZ)) playerPos.z = nextZ.z;
+                playerPos.x += moveDir.x * speed;
+                playerPos.z += moveDir.z * speed;
+                playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
             }
 
-            // تحديث مكان الكاميرا والمصباح اليدوي
-            camera.position.copy(playerPos);
-            let dir = new THREE.Vector3(
-                Math.sin(camYaw) * Math.cos(camPitch),
-                Math.sin(camPitch),
-                Math.cos(camYaw) * Math.cos(camPitch)
-            );
-            camera.lookAt(playerPos.clone().add(dir));
+            updateLimbAnimation(playerObj, isMoving);
+            playerVelocity.y -= 0.01;
+            playerPos.y += playerVelocity.y;
+            if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
+            playerObj.group.position.copy(playerPos);
 
-            flashlight.position.copy(playerPos);
-            flashlight.target.position.copy(playerPos.clone().add(dir.clone().multiplyScalar(10)));
-            flashlight.target.updateMatrixWorld();
+            // تحديث الطلقات والتصادم مع الوحوش
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.mesh.position.addScaledVector(b.dir, 1.2);
+                b.life--;
 
-            // فحص التقاط المفاتيح
-            for (let i = keys.length - 1; i >= 0; i--) {
-                let k = keys[i];
-                k.rotation.y += 0.05;
-                if (k.position.distanceTo(playerPos) < 1.2) {
-                    scene.remove(k);
-                    keys.splice(i, 1);
-                    keysLeft--;
-                    document.getElementById('status-txt').innerText = `المفاتيح المتبقية: ${keysLeft}`;
-                    if (keysLeft === 0) {
-                        endGame(true);
+                for (let j = monsters.length - 1; j >= 0; j--) {
+                    let m = monsters[j];
+                    if (b.mesh.position.distanceTo(m.mesh.position) < 1.5) {
+                        m.hp -= 15;
+                        scene.remove(b.mesh);
+                        bullets.splice(i, 1);
+                        if (m.hp <= 0) {
+                            scene.remove(m.mesh);
+                            monsters.splice(j, 1);
+                            score += 50;
+                            document.getElementById('score-txt').innerText = `الوحوش المتبقية: ${monsters.length} | النقاط: ${score}`;
+                            if (monsters.length === 0) endGame(true);
+                        }
+                        break;
                     }
+                }
+
+                if (b.life <= 0 && bullets[i]) {
+                    scene.remove(b.mesh);
+                    bullets.splice(i, 1);
                 }
             }
 
-            renderer.render(scene, camera);
+            // ذكاء اصطناعي للوحوش (المطاردة)
+            monsters.forEach(m => {
+                let dirToPlayer = playerPos.clone().sub(m.mesh.position).normalize();
+                m.mesh.position.addScaledVector(dirToPlayer, 0.08); // سرعة مطاردة الوحش
+                m.mesh.lookAt(playerPos.x, m.mesh.position.y, playerPos.z);
+
+                // إلحاق الضرر باللاعب عند الاقتراب
+                if (m.mesh.position.distanceTo(playerPos) < 1.3) {
+                    playerHealth -= 0.5;
+                    document.getElementById('health-bar').style.width = `${Math.max(0, playerHealth)}%`;
+                    if (playerHealth <= 0) endGame(false);
+                }
+            });
+
+            // كاميرا المنظور الثالث
+            let camDistance = 10;
+            let camX = playerPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
+            let camY = playerPos.y + Math.sin(camPitch) * camDistance + 2.5;
+            let camZ = playerPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
+
+            camera.position.set(camX, camY, camZ);
+            camera.lookAt(playerPos.x, playerPos.y + 1.2, playerPos.z);
+
+            composer.render();
         }
     </script>
 </body>

@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Reaction Engine - التجربة الأولى</title>
+  <title>Face Reaction Blitz ⚡ - اللعبة الكاملة</title>
   <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
     body {
-      font-family: system-ui, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0f172a;
       color: #fff;
       display: flex;
@@ -15,53 +19,162 @@
       justify-content: center;
       min-height: 100vh;
       margin: 0;
+      padding: 10px;
     }
-    .container {
+    .game-card {
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       position: relative;
-      width: 480px;
-      height: 360px;
+    }
+    .score-board {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      background: #0f172a;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+    .camera-box {
+      position: relative;
+      width: 100%;
+      height: 280px;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      border: 3px solid #38bdf8;
+      border: 2px solid #475569;
+      background: #000;
     }
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* المرآة */
+      transform: scaleX(-1);
     }
-    .status-box {
-      margin-top: 20px;
+    .command-overlay {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #facc15;
+      padding: 10px 20px;
+      border-radius: 30px;
       font-size: 1.4rem;
+      font-weight: 800;
+      color: #facc15;
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .timer-bar-container {
+      width: 100%;
+      height: 12px;
+      background: #334155;
+      border-radius: 6px;
+      margin-top: 15px;
+      overflow: hidden;
+    }
+    .timer-bar {
+      width: 100%;
+      height: 100%;
+      background: #4ade80;
+      transition: width 0.1s linear, background-color 0.3s;
+    }
+    .btn {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.3rem;
       font-weight: bold;
-      background: #1e293b;
-      padding: 15px 30px;
-      border-radius: 8px;
-      border: 1px solid #475569;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn:hover {
+      background: #7dd3fc;
+      transform: scale(1.02);
+    }
+    .game-over-screen {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 16px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
 
-  <h1>اختبار كاشف حركات الوجه 🎯</h1>
-  
-  <div class="container">
-    <video id="webcam" autoplay playsinline></video>
+  <div class="game-card">
+    <div class="score-board">
+      <div>النقاط: <span id="score" style="color:#38bdf8;">0</span></div>
+      <div>أعلى نتيجة: <span id="high-score" style="color:#facc15;">0</span></div>
+    </div>
+
+    <div class="camera-box">
+      <video id="webcam" autoplay playsinline></video>
+      <div class="command-overlay" id="command-display">اضغط ابدأ اللعب 🚀</div>
+    </div>
+
+    <div class="timer-bar-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <button class="btn" id="start-btn" onclick="startGame()">ابدأ اللعب الآن 🎮</button>
+
+    <!-- شاشة انتهاء اللعبة -->
+    <div class="game-over-screen" id="game-over">
+      <h2 style="color: #ef4444; font-size: 2rem; margin-bottom: 5px;">خسرت! 💥</h2>
+      <p style="font-size: 1.2rem; margin-bottom: 20px;">نتيجة الجولة: <span id="final-score" style="color:#38bdf8; font-weight:bold;">0</span></p>
+      <button class="btn" onclick="startGame()">إعادة المحاولة 🔄</button>
+    </div>
   </div>
 
-  <div class="status-box" id="status">جاري تحميل المحرك والتعرف على الكاميرا...</div>
-
-  <!-- MediaPipe Vision Tasks -->
   <script type="module">
     import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
     const video = document.getElementById("webcam");
-    const statusText = document.getElementById("status");
+    const commandDisplay = document.getElementById("command-display");
+    const timerBar = document.getElementById("timer-bar");
+    const scoreText = document.getElementById("score");
+    const highScoreText = document.getElementById("high-score");
+    const finalScoreText = document.getElementById("final-score");
+    const gameOverScreen = document.getElementById("game-over");
+    const startBtn = document.getElementById("start-btn");
+
     let faceLandmarker;
     let lastVideoTime = -1;
+    let gameState = "IDLE"; // IDLE, PLAYING, GAMEOVER
+    let score = 0;
+    let highScore = 0;
+    let currentCommand = null;
+    let timerInterval = null;
+    let timeLeft = 100;
+    let timeLimit = 2500; // وقت الحركة (2.5 ثانية)
 
-    async function initFaceTracker() {
+    const commands = [
+      { id: "MOUTH_OPEN", text: "😮 افتح فمك واسعاً!" },
+      { id: "BLINK_BOTH", text: "😑 أغمض عينيك الاثنين!" },
+      { id: "BLINK_LEFT", text: "😉 غمزة بالعين اليسرى!" },
+      { id: "BLINK_RIGHT", text: "😜 غمزة بالعين اليمنى!" }
+    ];
+
+    async function init() {
+      commandDisplay.innerText = "جاري تحميل محرك الذكاء الاصطناعي...";
       const filesetResolver = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
       );
@@ -76,49 +189,113 @@
         numFaces: 1
       });
 
-      startCamera();
-    }
-
-    async function startCamera() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
-      video.addEventListener("loadeddata", predictWebcam);
-      statusText.innerText = "وجّه وجهك نحو الكاميرا وقم بالحركات!";
+      video.addEventListener("loadeddata", () => {
+        commandDisplay.innerText = "جاهز! اضغط ابدأ اللعب 🚀";
+        predictLoop();
+      });
     }
 
-    async function predictWebcam() {
-      if (video.currentTime !== lastVideoTime) {
+    window.startGame = function() {
+      score = 0;
+      timeLimit = 2500;
+      scoreText.innerText = score;
+      gameOverScreen.style.display = "none";
+      startBtn.style.display = "none";
+      gameState = "PLAYING";
+      nextRound();
+    };
+
+    function nextRound() {
+      // اختيار أمر عشوائي جديد مقتطع عن السابقتين
+      const nextCmd = commands[Math.floor(Math.random() * commands.length)];
+      currentCommand = nextCmd.id;
+      commandDisplay.innerText = nextCmd.text;
+
+      // تقليل الوقت تدريجياً لزيادة الصعوبة مع زيادة النقاط
+      timeLimit = Math.max(1200, 2500 - (score * 80)); 
+      
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      let startTime = Date.now();
+
+      timerInterval = setInterval(() => {
+        if (gameState !== "PLAYING") return;
+        let elapsed = Date.now() - startTime;
+        let remainingRatio = Math.max(0, (timeLimit - elapsed) / timeLimit);
+        
+        timerBar.style.width = (remainingRatio * 100) + "%";
+        
+        if (remainingRatio > 0.5) {
+          timerBar.style.backgroundColor = "#4ade80";
+        } else if (remainingRatio > 0.2) {
+          timerBar.style.backgroundColor = "#facc15";
+        } else {
+          timerBar.style.backgroundColor = "#ef4444";
+        }
+
+        if (elapsed >= timeLimit) {
+          endGame();
+        }
+      }, 30);
+    }
+
+    function checkSuccess(detectedAction) {
+      if (gameState !== "PLAYING") return;
+
+      if (detectedAction === currentCommand) {
+        clearInterval(timerInterval);
+        score++;
+        scoreText.innerText = score;
+        if (score > highScore) {
+          highScore = score;
+          highScoreText.innerText = highScore;
+        }
+        
+        // تأثير بصري سريع للتأكيد
+        commandDisplay.innerText = "ممتاز! ⚡";
+        setTimeout(nextRound, 300);
+      }
+    }
+
+    async function predictLoop() {
+      if (video.currentTime !== lastVideoTime && faceLandmarker) {
         lastVideoTime = video.currentTime;
         const results = faceLandmarker.detectForVideo(video, performance.now());
 
-        if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
+        if (results.faceBlendshapes && results.faceBlendshapes.length > 0 && gameState === "PLAYING") {
           const shapes = results.faceBlendshapes[0].categories;
           
-          // استخراج نسب الحركات
           const jawOpen = shapes.find(s => s.categoryName === "jawOpen")?.score || 0;
-          const eyeBlinkLeft = shapes.find(s => s.categoryName === "eyeBlinkLeft")?.score || 0;
-          const eyeBlinkRight = shapes.find(s => s.categoryName === "eyeBlinkRight")?.score || 0;
+          const blinkLeft = shapes.find(s => s.categoryName === "eyeBlinkLeft")?.score || 0;
+          const blinkRight = shapes.find(s => s.categoryName === "eyeBlinkRight")?.score || 0;
 
-          // تحليل الحركة وتحديث الواجهة
           if (jawOpen > 0.45) {
-            statusText.innerText = "😮 الفم مفتوح (هجوم / قفز)!";
-            statusText.style.color = "#4ade80";
-          } else if (eyeBlinkLeft > 0.5 && eyeBlinkRight > 0.5) {
-            statusText.innerText = "😑 إغلاق العينين (دفاع)!";
-            statusText.style.color = "#facc15";
-          } else if (eyeBlinkLeft > 0.5) {
-            statusText.innerText = "😉 غمزة بالعين اليسرى!";
-            statusText.style.color = "#38bdf8";
-          } else {
-            statusText.innerText = "🙂 وضع الاستعداد...";
-            statusText.style.color = "#ffffff";
+            checkSuccess("MOUTH_OPEN");
+          } else if (blinkLeft > 0.5 && blinkRight > 0.5) {
+            checkSuccess("BLINK_BOTH");
+          } else if (blinkLeft > 0.55 && blinkRight < 0.3) {
+            checkSuccess("BLINK_LEFT");
+          } else if (blinkRight > 0.55 && blinkLeft < 0.3) {
+            checkSuccess("BLINK_RIGHT");
           }
         }
       }
-      requestAnimationFrame(predictWebcam);
+      requestAnimationFrame(predictLoop);
     }
 
-    initFaceTracker();
+    function endGame() {
+      clearInterval(timerInterval);
+      gameState = "GAMEOVER";
+      finalScoreText.innerText = score;
+      gameOverScreen.style.display = "flex";
+    }
+
+    init();
   </script>
 </body>
 </html>

@@ -1,557 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Combat Edition</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #050814;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-        #ui {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            color: #f8fafc;
-            background: rgba(15, 23, 42, 0.85);
-            padding: 14px 22px;
-            border-radius: 16px;
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            pointer-events: none;
-            z-index: 10;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        #ui h1 { margin: 0 0 4px 0; font-size: 16px; color: #38bdf8; text-shadow: 0 0 10px rgba(56,189,248,0.5); }
-        #ui p { margin: 0 0 3px 0; font-size: 11px; color: #94a3b8; }
-        
-        #joystick-zone {
-            position: absolute; bottom: 30px; left: 30px;
-            width: 130px; height: 130px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(56, 189, 248, 0.4);
-            border-radius: 50%; z-index: 10;
-            backdrop-filter: blur(8px);
-        }
-        #joystick-knob {
-            position: absolute; top: 39px; left: 39px;
-            width: 50px; height: 50px;
-            background: linear-gradient(135deg, #0ea5e9, #2563eb);
-            border-radius: 50%; pointer-events: none;
-            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.5);
-        }
-        .action-btns {
-            position: absolute; bottom: 30px; right: 30px;
-            display: flex; flex-direction: column; gap: 12px; z-index: 10;
-        }
-        .action-btn {
-            width: 65px; height: 65px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 2px solid rgba(56, 189, 248, 0.5);
-            color: #38bdf8; font-weight: bold; font-size: 13px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            transition: transform 0.1s;
-        }
-        .action-btn:active { transform: scale(0.92); background: #38bdf8; color: #0f172a; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Reaction Engine - التجربة الأولى</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      position: relative;
+      width: 480px;
+      height: 360px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 3px solid #38bdf8;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* المرآة */
+    }
+    .status-box {
+      margin-top: 20px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      background: #1e293b;
+      padding: 15px 30px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+    }
+  </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
-    <div id="ui">
-        <h1>Echo Gravity Nexus</h1>
-        <p>Combat & Monster Survival Edition</p>
-        <p id="status-txt">Status: Free Roam | HP: 100 | Score: 0</p>
-    </div>
-    
-    <div id="joystick-zone"><div id="joystick-knob"></div></div>
-    <div class="action-btns">
-        <div class="action-btn" id="jump-btn">JUMP</div>
-        <div class="action-btn" id="fire-btn" style="border-color: rgba(239, 68, 68, 0.7); color: #ef4444;">ATTACK</div>
-        <div class="action-btn" id="car-btn" style="border-color: rgba(16, 185, 129, 0.7); color: #10b981; font-size: 11px;">DRIVE</div>
-    </div>
 
-    <!-- Three.js Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <h1>اختبار كاشف حركات الوجه 🎯</h1>
+  
+  <div class="container">
+    <video id="webcam" autoplay playsinline></video>
+  </div>
 
-    <script>
-        let scene, camera, renderer, composer;
-        let playerObj = {};
-        let moveVector = new THREE.Vector2(0, 0);
-        let playerVelocity = new THREE.Vector3();
-        let playerPos = new THREE.Vector3(0, 0, 10);
-        let camYaw = 0, camPitch = 0.35;
-        let npcs = [];
-        let buildingBoxes = [];
-        let bullets = [];
-        let monsters = [];
-        let playerHealth = 100;
-        let score = 0;
-        
-        let carObj, carBox;
-        let isDriving = false;
-        let carPos = new THREE.Vector3(15, 0, 15);
+  <div class="status-box" id="status">جاري تحميل المحرك والتعرف على الكاميرا...</div>
 
-        const MAP_LIMIT = 240;
-        const PLAYER_RADIUS = 0.85;
+  <!-- MediaPipe Vision Tasks -->
+  <script type="module">
+    import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
-        init();
-        animate();
+    const video = document.getElementById("webcam");
+    const statusText = document.getElementById("status");
+    let faceLandmarker;
+    let lastVideoTime = -1;
 
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x050814);
-            scene.fog = new THREE.FogExp2(0x050814, 0.0028);
+    async function initFaceTracker() {
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+      );
+      
+      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+          delegate: "GPU"
+        },
+        outputFaceBlendshapes: true,
+        runningMode: "VIDEO",
+        numFaces: 1
+      });
 
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
+      startCamera();
+    }
 
-            composer = new THREE.EffectComposer(renderer);
-            composer.addPass(new THREE.RenderPass(scene, camera));
+    async function startCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      video.addEventListener("loadeddata", predictWebcam);
+      statusText.innerText = "وجّه وجهك نحو الكاميرا وقم بالحركات!";
+    }
 
-            const bloomPass = new THREE.UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                0.55, 0.4, 0.75
-            );
-            composer.addPass(bloomPass);
+    async function predictWebcam() {
+      if (video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        const results = faceLandmarker.detectForVideo(video, performance.now());
 
-            scene.add(new THREE.AmbientLight(0x1e293b, 1.2));
+        if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
+          const shapes = results.faceBlendshapes[0].categories;
+          
+          // استخراج نسب الحركات
+          const jawOpen = shapes.find(s => s.categoryName === "jawOpen")?.score || 0;
+          const eyeBlinkLeft = shapes.find(s => s.categoryName === "eyeBlinkLeft")?.score || 0;
+          const eyeBlinkRight = shapes.find(s => s.categoryName === "eyeBlinkRight")?.score || 0;
 
-            const sunLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
-            sunLight.position.set(150, 300, 150);
-            sunLight.castShadow = true;
-            sunLight.shadow.mapSize.width = 2048;
-            sunLight.shadow.mapSize.height = 2048;
-            sunLight.shadow.camera.near = 0.5;
-            sunLight.shadow.camera.far = 600;
-            let d = 150;
-            sunLight.shadow.camera.left = -d;
-            sunLight.shadow.camera.right = d;
-            sunLight.shadow.camera.top = d;
-            sunLight.shadow.camera.bottom = -d;
-            sunLight.shadow.bias = -0.0005;
-            scene.add(sunLight);
-
-            const fillLight = new THREE.DirectionalLight(0xec4899, 0.8);
-            fillLight.position.set(-150, 100, -150);
-            scene.add(fillLight);
-
-            playerObj = createHumanoidCharacter(0x0ea5e9, 0x0f172a, 0x38bdf8);
-            scene.add(playerObj.group);
-
-            carObj = createCarWithWheels();
-            scene.add(carObj);
-
-            buildMassiveRealisticCity();
-            spawnMonsters(12);
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                composer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            setupControls();
+          // تحليل الحركة وتحديث الواجهة
+          if (jawOpen > 0.45) {
+            statusText.innerText = "😮 الفم مفتوح (هجوم / قفز)!";
+            statusText.style.color = "#4ade80";
+          } else if (eyeBlinkLeft > 0.5 && eyeBlinkRight > 0.5) {
+            statusText.innerText = "😑 إغلاق العينين (دفاع)!";
+            statusText.style.color = "#facc15";
+          } else if (eyeBlinkLeft > 0.5) {
+            statusText.innerText = "😉 غمزة بالعين اليسرى!";
+            statusText.style.color = "#38bdf8";
+          } else {
+            statusText.innerText = "🙂 وضع الاستعداد...";
+            statusText.style.color = "#ffffff";
+          }
         }
+      }
+      requestAnimationFrame(predictWebcam);
+    }
 
-        function createHumanoidCharacter(shirtColor, pantsColor, hairColor) {
-            const group = new THREE.Group();
-            const bodyMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.2, metalness: 0.1 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.45), bodyMat);
-            body.position.y = 1.25; body.castShadow = true; group.add(body);
-
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 }));
-            head.position.y = 2.1; head.castShadow = true; group.add(head);
-
-            const hair = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.2, 0.54), new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.4 }));
-            hair.position.set(0, 2.38, 0); group.add(hair);
-
-            const armGeo = new THREE.BoxGeometry(0.24, 0.9, 0.24);
-            const armMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.3 });
-            
-            const armLGroup = new THREE.Group();
-            let armLMesh = new THREE.Mesh(armGeo, armMat);
-            armLMesh.position.y = -0.35; armLMesh.castShadow = true;
-            armLGroup.add(armLMesh);
-            armLGroup.position.set(-0.54, 1.7, 0); group.add(armLGroup);
-
-            const armRGroup = new THREE.Group();
-            let armRMesh = new THREE.Mesh(armGeo, armMat);
-            armRMesh.position.y = -0.35; armRMesh.castShadow = true;
-            armRGroup.add(armRMesh);
-            armRGroup.position.set(0.54, 1.7, 0); group.add(armRGroup);
-
-            const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
-            const legMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.4 });
-
-            const legLGroup = new THREE.Group();
-            let legLMesh = new THREE.Mesh(legGeo, legMat);
-            legLMesh.position.y = -0.45; legLMesh.castShadow = true;
-            legLGroup.add(legLMesh);
-            legLGroup.position.set(-0.2, 0.8, 0); group.add(legLGroup);
-
-            const legRGroup = new THREE.Group();
-            let legRMesh = new THREE.Mesh(legGeo, legMat);
-            legRMesh.position.y = -0.45; legRMesh.castShadow = true;
-            legRGroup.add(legRMesh);
-            legRGroup.position.set(0.2, 0.8, 0); group.add(legRGroup);
-
-            return { group, armL: armLGroup, armR: armRGroup, legL: legLGroup, legR: legRGroup, walkTimer: 0 };
-        }
-
-        function createMonster() {
-            const group = new THREE.Group();
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3, metalness: 0.5 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.4, 0.5), bodyMat);
-            body.position.y = 0.9; body.castShadow = true; group.add(body);
-
-            const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, 0.2), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
-            eyes.position.set(0, 1.4, 0.3); group.add(eyes);
-
-            return group;
-        }
-
-        function spawnMonsters(count) {
-            for (let i = 0; i < count; i++) {
-                let monsterMesh = createMonster();
-                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                if (Math.abs(rx) < 20) rx = 30;
-                monsterMesh.position.set(rx, 0, rz);
-                scene.add(monsterMesh);
-                monsters.push({ mesh: monsterMesh, hp: 40 });
-            }
-        }
-
-        function createCarWithWheels() {
-            const carGroup = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(2.2, 1, 4.5),
-                new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.15 })
-            );
-            body.position.y = 0.9; body.castShadow = true;
-            carGroup.add(body);
-
-            const top = new THREE.Mesh(
-                new THREE.BoxGeometry(1.8, 0.8, 2.2),
-                new THREE.MeshPhysicalMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.1, transmission: 0.3, transparent: true, opacity: 0.9 })
-            );
-            top.position.set(0, 1.7, -0.2);
-            carGroup.add(top);
-
-            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
-            wheelGeo.rotateZ(Math.PI / 2);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
-
-            [[-1.1, 0.4, 1.4], [1.1, 0.4, 1.4], [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]].forEach(pos => {
-                let wheel = new THREE.Mesh(wheelGeo, wheelMat);
-                wheel.position.set(pos[0], pos[1], pos[2]);
-                wheel.castShadow = true;
-                carGroup.add(wheel);
-            });
-
-            carGroup.position.copy(carPos);
-            carBox = new THREE.Box3().setFromObject(carGroup);
-            carBox.expandByScalar(0.4);
-            return carGroup;
-        }
-
-        function buildMassiveRealisticCity() {
-            const groundGeo = new THREE.PlaneGeometry(MAP_LIMIT * 2, MAP_LIMIT * 2);
-            const groundMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.8, metalness: 0.2 });
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.receiveShadow = true;
-            scene.add(ground);
-
-            createMapBoundaries();
-
-            for (let i = -MAP_LIMIT + 40; i <= MAP_LIMIT - 40; i += 60) {
-                let roadLong = new THREE.Mesh(new THREE.PlaneGeometry(16, MAP_LIMIT * 2), new THREE.MeshStandardMaterial({ color: 0x030712, roughness: 0.9 }));
-                roadLong.rotation.x = -Math.PI / 2; roadLong.position.set(i, 0.02, 0); scene.add(roadLong);
-
-                let roadCross = new THREE.Mesh(new THREE.PlaneGeometry(MAP_LIMIT * 2, 16), new THREE.MeshStandardMaterial({ color: 0x030712, roughness: 0.9 }));
-                roadCross.rotation.x = -Math.PI / 2; roadCross.position.set(0, 0.02, i); scene.add(roadCross);
-            }
-
-            const buildingColors = [0x1e293b, 0x0f172a, 0x334155, 0x111827];
-            let buildingCount = 0;
-            
-            for (let x = -MAP_LIMIT + 50; x <= MAP_LIMIT - 50; x += 60) {
-                for (let z = -MAP_LIMIT + 50; z <= MAP_LIMIT - 50; z += 60) {
-                    if (Math.abs(x) < 25 && Math.abs(z) < 25) continue;
-
-                    let bWidth = 24, bDepth = 24, bHeight = 30 + Math.random() * 45;
-                    let bColor = buildingColors[Math.floor(Math.random() * buildingColors.length)];
-
-                    let bMesh = new THREE.Mesh(
-                        new THREE.BoxGeometry(bWidth, bHeight, bDepth),
-                        new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.25, metalness: 0.3 })
-                    );
-                    bMesh.position.set(x + 15, bHeight / 2, z + 15);
-                    bMesh.castShadow = true; bMesh.receiveShadow = true;
-                    scene.add(bMesh);
-
-                    let box = new THREE.Box3().setFromObject(bMesh);
-                    box.expandByScalar(0.35); 
-                    buildingBoxes.push(box);
-
-                    if (buildingCount % 3 === 0) {
-                        let sign = new THREE.Mesh(new THREE.BoxGeometry(9, 1.8, 0.5), new THREE.MeshBasicMaterial({ color: 0xec4899 }));
-                        sign.position.set(x + 15, bHeight * 0.6, z + 15 + bDepth / 2 + 0.3);
-                        scene.add(sign);
-                    } else if (buildingCount % 4 === 0) {
-                        let neon = new THREE.Mesh(new THREE.BoxGeometry(11, 2, 0.5), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
-                        neon.position.set(x + 15, bHeight * 0.75, z + 15 + bDepth / 2 + 0.3);
-                        scene.add(neon);
-                    }
-                    buildingCount++;
-                }
-            }
-        }
-
-        function createMapBoundaries() {
-            const barrierGeo = new THREE.BoxGeometry(MAP_LIMIT * 2, 30, 2);
-            const barrierMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.15 });
-
-            const n = new THREE.Mesh(barrierGeo, barrierMat); n.position.set(0, 15, MAP_LIMIT); scene.add(n);
-            const s = new THREE.Mesh(barrierGeo, barrierMat); s.position.set(0, 15, -MAP_LIMIT); scene.add(s);
-            
-            const barrierGeoRot = new THREE.BoxGeometry(2, 30, MAP_LIMIT * 2);
-            const e = new THREE.Mesh(barrierGeoRot, barrierMat); e.position.set(MAP_LIMIT, 15, 0); scene.add(e);
-            const w = new THREE.Mesh(barrierGeoRot, barrierMat); w.position.set(-MAP_LIMIT, 15, 0); scene.add(w);
-
-            buildingBoxes.push(new THREE.Box3().setFromObject(n));
-            buildingBoxes.push(new THREE.Box3().setFromObject(s));
-            buildingBoxes.push(new THREE.Box3().setFromObject(e));
-            buildingBoxes.push(new THREE.Box3().setFromObject(w));
-        }
-
-        function setupControls() {
-            const zone = document.getElementById('joystick-zone');
-            const knob = document.getElementById('joystick-knob');
-            let jTouch = null;
-
-            zone.addEventListener('touchstart', (e) => {
-                if (jTouch === null) {
-                    jTouch = e.changedTouches[0].identifier;
-                    updateJoy(e.changedTouches[0]);
-                }
-            });
-            zone.addEventListener('touchmove', (e) => {
-                for (let t of e.changedTouches) if (t.identifier === jTouch) updateJoy(t);
-            });
-            const endJoy = (e) => {
-                for (let t of e.changedTouches) if (t.identifier === jTouch) {
-                    jTouch = null; moveVector.set(0, 0); knob.style.transform = `translate(0px, 0px)`;
-                }
-            };
-            zone.addEventListener('touchend', endJoy);
-
-            function updateJoy(t) {
-                let rect = zone.getBoundingClientRect();
-                let dx = t.clientX - (rect.left + rect.width / 2);
-                let dy = t.clientY - (rect.top + rect.height / 2);
-                let dist = Math.sqrt(dx*dx + dy*dy), maxD = 45;
-                if (dist > maxD) { dx = (dx/dist)*maxD; dy = (dy/dist)*maxD; }
-                knob.style.transform = `translate(${dx}px, ${dy}px)`;
-                moveVector.set(-dx / maxD, -dy / maxD);
-            }
-
-            let dragging = false, px = 0, py = 0;
-            window.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#joystick-zone') || e.target.closest('.action-btns')) return;
-                dragging = true; px = e.touches[0].clientX; py = e.touches[0].clientY;
-            });
-            window.addEventListener('touchmove', (e) => {
-                if (!dragging) return;
-                let t = Array.from(e.touches).find(item => item.clientX > window.innerWidth / 3);
-                if (!t) return;
-                camYaw -= (t.clientX - px) * 0.005;
-                camPitch -= (t.clientY - py) * 0.003;
-                camPitch = Math.max(0.1, Math.min(1.2, camPitch));
-                px = t.clientX; py = t.clientY;
-            });
-            window.addEventListener('touchend', () => { dragging = false; });
-
-            document.getElementById('jump-btn').addEventListener('touchstart', () => {
-                if (!isDriving && playerPos.y <= 0.01) playerVelocity.y = 0.22;
-            });
-
-            document.getElementById('fire-btn').addEventListener('touchstart', () => {
-                playerObj.armR.rotation.x = -Math.PI / 2;
-                setTimeout(() => playerObj.armR.rotation.x = 0, 200);
-
-                let bullet = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-                bullet.position.copy(playerPos).add(new THREE.Vector3(0, 1.5, 0));
-                
-                let dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).normalize();
-                bullets.push({ mesh: bullet, dir: dir, life: 80 });
-                scene.add(bullet);
-            });
-
-            document.getElementById('car-btn').addEventListener('touchstart', () => {
-                let dist = playerPos.distanceTo(carPos);
-                if (dist < 6) {
-                    isDriving = !isDriving;
-                    playerObj.group.visible = !isDriving;
-                    document.getElementById('car-btn').innerText = isDriving ? "WALK" : "DRIVE";
-                }
-            });
-        }
-
-        function updateLimbAnimation(charObj, isMoving) {
-            if (isMoving) {
-                charObj.walkTimer += 0.2;
-                let swing = Math.sin(charObj.walkTimer) * 0.6;
-                charObj.legL.rotation.x = swing;
-                charObj.legR.rotation.x = -swing;
-                charObj.armL.rotation.x = -swing;
-                charObj.armR.rotation.x = swing;
-            } else {
-                charObj.legL.rotation.x = 0; charObj.legR.rotation.x = 0;
-                charObj.armL.rotation.x = 0; charObj.armR.rotation.x = 0;
-            }
-        }
-
-        function checkCollisionAt(pos, radius) {
-            let testBox = new THREE.Box3(
-                new THREE.Vector3(pos.x - radius, pos.y, pos.z - radius),
-                new THREE.Vector3(pos.x + radius, pos.y + 1.8, pos.z + radius)
-            );
-            for (let box of buildingBoxes) {
-                if (box.intersectsBox(testBox)) return true;
-            }
-            if (!isDriving && carBox && carBox.intersectsBox(testBox)) return true;
-            return false;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            let speed = isDriving ? 0.38 : 0.18;
-            let isMoving = moveVector.length() > 0;
-
-            if (isMoving) {
-                let moveDir = new THREE.Vector3(moveVector.x, 0, moveVector.y).normalize();
-                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
-
-                if (isDriving) {
-                    let nextCarPos = carPos.clone().addScaledVector(moveDir, speed);
-                    let tempCarBox = new THREE.Box3().setFromCenterAndSize(
-                        nextCarPos.clone().add(new THREE.Vector3(0, 1, 0)),
-                        new THREE.Vector3(2.5, 2, 4.8)
-                    );
-                    let carCollides = buildingBoxes.some(box => box.intersectsBox(tempCarBox));
-
-                    if (!carCollides) {
-                        carPos.copy(nextCarPos);
-                        carObj.position.copy(carPos);
-                        carBox.copy(tempCarBox);
-                        carObj.rotation.y = Math.atan2(moveDir.x, moveDir.z);
-                        playerPos.copy(carPos);
-                    }
-                } else {
-                    let stepX = new THREE.Vector3(playerPos.x + moveDir.x * speed, playerPos.y, playerPos.z);
-                    let stepZ = new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDir.z * speed);
-
-                    if (!checkCollisionAt(stepX, PLAYER_RADIUS)) playerPos.x = stepX.x;
-                    if (!checkCollisionAt(stepZ, PLAYER_RADIUS)) playerPos.z = stepZ.z;
-
-                    playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
-                }
-            }
-
-            if (!isDriving) {
-                updateLimbAnimation(playerObj, isMoving);
-                playerVelocity.y -= 0.01;
-                playerPos.y += playerVelocity.y;
-                if (playerPos.y < 0) { playerPos.y = 0; playerVelocity.y = 0; }
-                playerObj.group.position.copy(playerPos);
-            }
-
-            // Bullet collision with monsters
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let b = bullets[i];
-                b.mesh.position.addScaledVector(b.dir, 1.0);
-                b.life--;
-
-                for (let j = monsters.length - 1; j >= 0; j--) {
-                    let m = monsters[j];
-                    if (b.mesh.position.distanceTo(m.mesh.position) < 1.5) {
-                        m.hp -= 20;
-                        scene.remove(b.mesh);
-                        bullets.splice(i, 1);
-                        if (m.hp <= 0) {
-                            scene.remove(m.mesh);
-                            monsters.splice(j, 1);
-                            score += 100;
-                        }
-                        break;
-                    }
-                }
-
-                if (b.life <= 0 && bullets[i]) {
-                    scene.remove(b.mesh);
-                    bullets.splice(i, 1);
-                }
-            }
-
-            // Monster AI chasing player
-            monsters.forEach(m => {
-                let dirToPlayer = playerPos.clone().sub(m.mesh.position).normalize();
-                m.mesh.position.addScaledVector(dirToPlayer, 0.05);
-                m.mesh.lookAt(playerPos.x, m.mesh.position.y, playerPos.z);
-
-                if (m.mesh.position.distanceTo(playerPos) < 1.4) {
-                    playerHealth = Math.max(0, playerHealth - 0.3);
-                }
-            });
-
-            let statusMode = isDriving ? "Driving" : "Free Roam";
-            document.getElementById('status-txt').innerText = `Status: ${statusMode} | HP: ${Math.floor(playerHealth)} | Score: ${score} | Monsters: ${monsters.length}`;
-
-            let targetPos = isDriving ? carPos : playerPos;
-            let camDistance = isDriving ? 16 : 11;
-            let camX = targetPos.x - Math.sin(camYaw) * camDistance * Math.cos(camPitch);
-            let camY = targetPos.y + Math.sin(camPitch) * camDistance + (isDriving ? 4 : 3);
-            let camZ = targetPos.z - Math.cos(camYaw) * camDistance * Math.cos(camPitch);
-
-            camera.position.lerp(new THREE.Vector3(camX, camY, camZ), 0.2);
-            camera.lookAt(targetPos.x, targetPos.y + 1.2, targetPos.z);
-
-            composer.render();
-        }
-    </script>
+    initFaceTracker();
+  </script>
 </body>
 </html>

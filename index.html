@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Echo Gravity Nexus - Next-Gen City</title>
+    <title>Echo Gravity Nexus - Combat Edition</title>
     <style>
         body {
             margin: 0;
@@ -74,9 +74,9 @@
 <body>
     <div id="canvas-container"></div>
     <div id="ui">
-        <h1>Echo Gravity Nexus - Combat</h1>
-        <p>Cinematic Lighting, Real Bloom, & Monster Survival</p>
-        <p id="status-txt">Status: Free Roam | Health: 100 | Score: 0</p>
+        <h1>Echo Gravity Nexus</h1>
+        <p>Combat & Monster Survival Edition</p>
+        <p id="status-txt">Status: Free Roam | HP: 100 | Score: 0</p>
     </div>
     
     <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -86,7 +86,7 @@
         <div class="action-btn" id="car-btn" style="border-color: rgba(16, 185, 129, 0.7); color: #10b981; font-size: 11px;">DRIVE</div>
     </div>
 
-    <!-- مكتبات Three.js مع أدوات المعالجة اللاحقة Post-Processing -->
+    <!-- Three.js Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
@@ -136,8 +136,7 @@
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             composer = new THREE.EffectComposer(renderer);
-            const renderPass = new THREE.RenderPass(scene, camera);
-            composer.addPass(renderPass);
+            composer.addPass(new THREE.RenderPass(scene, camera));
 
             const bloomPass = new THREE.UnrealBloomPass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -145,8 +144,7 @@
             );
             composer.addPass(bloomPass);
 
-            const ambientLight = new THREE.AmbientLight(0x1e293b, 1.2);
-            scene.add(ambientLight);
+            scene.add(new THREE.AmbientLight(0x1e293b, 1.2));
 
             const sunLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
             sunLight.position.set(150, 300, 150);
@@ -174,7 +172,7 @@
             scene.add(carObj);
 
             buildMassiveRealisticCity();
-            spawnMonsters(10);
+            spawnMonsters(12);
 
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -257,7 +255,6 @@
 
         function createCarWithWheels() {
             const carGroup = new THREE.Group();
-            
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(2.2, 1, 4.5),
                 new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.15 })
@@ -276,12 +273,7 @@
             wheelGeo.rotateZ(Math.PI / 2);
             const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
 
-            const wheelPositions = [
-                [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
-                [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
-            ];
-
-            wheelPositions.forEach(pos => {
+            [[-1.1, 0.4, 1.4], [1.1, 0.4, 1.4], [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]].forEach(pos => {
                 let wheel = new THREE.Mesh(wheelGeo, wheelMat);
                 wheel.position.set(pos[0], pos[1], pos[2]);
                 wheel.castShadow = true;
@@ -335,36 +327,16 @@
                     buildingBoxes.push(box);
 
                     if (buildingCount % 3 === 0) {
-                        let signMat = new THREE.MeshBasicMaterial({ color: 0xec4899 });
-                        let sign = new THREE.Mesh(new THREE.BoxGeometry(9, 1.8, 0.5), signMat);
+                        let sign = new THREE.Mesh(new THREE.BoxGeometry(9, 1.8, 0.5), new THREE.MeshBasicMaterial({ color: 0xec4899 }));
                         sign.position.set(x + 15, bHeight * 0.6, z + 15 + bDepth / 2 + 0.3);
                         scene.add(sign);
                     } else if (buildingCount % 4 === 0) {
-                        let neonMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-                        let neon = new THREE.Mesh(new THREE.BoxGeometry(11, 2, 0.5), neonMat);
+                        let neon = new THREE.Mesh(new THREE.BoxGeometry(11, 2, 0.5), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
                         neon.position.set(x + 15, bHeight * 0.75, z + 15 + bDepth / 2 + 0.3);
                         scene.add(neon);
                     }
-
-                    let winMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-                    for (let wy = 12; wy < bHeight - 4; wy += 8) {
-                        for (let wx = -7; wx <= 7; wx += 7) {
-                            let win = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 0.2), winMat);
-                            win.position.set(x + 15 + wx, wy, z + 15 + bDepth / 2 + 0.2);
-                            scene.add(win);
-                        }
-                    }
                     buildingCount++;
                 }
-            }
-
-            for (let i = 0; i < 20; i++) {
-                let rx = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                let rz = (Math.random() - 0.5) * (MAP_LIMIT * 1.5);
-                let npc = createHumanoidCharacter(Math.random() * 0xffffff, 0x1e293b, Math.random() * 0xffffff);
-                npc.group.position.set(rx, 0, rz);
-                scene.add(npc.group);
-                npcs.push(npc);
             }
         }
 
@@ -440,9 +412,7 @@
                 playerObj.armR.rotation.x = -Math.PI / 2;
                 setTimeout(() => playerObj.armR.rotation.x = 0, 200);
 
-                let bulletGeo = new THREE.SphereGeometry(0.22, 8, 8);
-                let bulletMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-                let bullet = new THREE.Mesh(bulletGeo, bulletMat);
+                let bullet = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
                 bullet.position.copy(playerPos).add(new THREE.Vector3(0, 1.5, 0));
                 
                 let dir = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).normalize();
@@ -469,10 +439,8 @@
                 charObj.armL.rotation.x = -swing;
                 charObj.armR.rotation.x = swing;
             } else {
-                charObj.legL.rotation.x = 0;
-                charObj.legR.rotation.x = 0;
-                charObj.armL.rotation.x = 0;
-                charObj.armR.rotation.x = 0;
+                charObj.legL.rotation.x = 0; charObj.legR.rotation.x = 0;
+                charObj.armL.rotation.x = 0; charObj.armR.rotation.x = 0;
             }
         }
 
@@ -481,7 +449,6 @@
                 new THREE.Vector3(pos.x - radius, pos.y, pos.z - radius),
                 new THREE.Vector3(pos.x + radius, pos.y + 1.8, pos.z + radius)
             );
-
             for (let box of buildingBoxes) {
                 if (box.intersectsBox(testBox)) return true;
             }
@@ -505,11 +472,7 @@
                         nextCarPos.clone().add(new THREE.Vector3(0, 1, 0)),
                         new THREE.Vector3(2.5, 2, 4.8)
                     );
-                    
-                    let carCollides = false;
-                    for (let box of buildingBoxes) {
-                        if (box.intersectsBox(tempCarBox)) { carCollides = true; break; }
-                    }
+                    let carCollides = buildingBoxes.some(box => box.intersectsBox(tempCarBox));
 
                     if (!carCollides) {
                         carPos.copy(nextCarPos);
@@ -522,11 +485,8 @@
                     let stepX = new THREE.Vector3(playerPos.x + moveDir.x * speed, playerPos.y, playerPos.z);
                     let stepZ = new THREE.Vector3(playerPos.x, playerPos.y, playerPos.z + moveDir.z * speed);
 
-                    let canMoveX = !checkCollisionAt(stepX, PLAYER_RADIUS);
-                    let canMoveZ = !checkCollisionAt(stepZ, PLAYER_RADIUS);
-
-                    if (canMoveX) playerPos.x = stepX.x;
-                    if (canMoveZ) playerPos.z = stepZ.z;
+                    if (!checkCollisionAt(stepX, PLAYER_RADIUS)) playerPos.x = stepX.x;
+                    if (!checkCollisionAt(stepZ, PLAYER_RADIUS)) playerPos.z = stepZ.z;
 
                     playerObj.group.rotation.y = Math.atan2(moveDir.x, moveDir.z);
                 }
@@ -540,7 +500,7 @@
                 playerObj.group.position.copy(playerPos);
             }
 
-            // فحص إطلاق النار وتدمير الوحوش واكتساب النقاط
+            // Bullet collision with monsters
             for (let i = bullets.length - 1; i >= 0; i--) {
                 let b = bullets[i];
                 b.mesh.position.addScaledVector(b.dir, 1.0);
@@ -567,35 +527,19 @@
                 }
             }
 
-            // ذكاء الوحوش المطاردة ومحاولة القضاء على اللاعب ونقص الصحة
+            // Monster AI chasing player
             monsters.forEach(m => {
                 let dirToPlayer = playerPos.clone().sub(m.mesh.position).normalize();
-                m.mesh.position.addScaledVector(dirToPlayer, 0.06);
+                m.mesh.position.addScaledVector(dirToPlayer, 0.05);
                 m.mesh.lookAt(playerPos.x, m.mesh.position.y, playerPos.z);
 
                 if (m.mesh.position.distanceTo(playerPos) < 1.4) {
-                    playerHealth = Math.max(0, playerHealth - 0.4);
+                    playerHealth = Math.max(0, playerHealth - 0.3);
                 }
             });
 
-            // تحديث شاشة الحالة باللغة الإنجليزية
             let statusMode = isDriving ? "Driving" : "Free Roam";
             document.getElementById('status-txt').innerText = `Status: ${statusMode} | HP: ${Math.floor(playerHealth)} | Score: ${score} | Monsters: ${monsters.length}`;
-
-            npcs.forEach(npc => {
-                let nextNpcZ = npc.group.position.z + 0.04;
-                if (nextNpcZ > MAP_LIMIT - 10) nextNpcZ = -MAP_LIMIT + 10;
-                
-                let npcTestPos = npc.group.position.clone();
-                npcTestPos.z = nextNpcZ;
-
-                if (!checkCollisionAt(npcTestPos, 0.4)) {
-                    npc.group.position.z = nextNpcZ;
-                } else {
-                    npc.group.position.z = -MAP_LIMIT + 10;
-                }
-                updateLimbAnimation(npc, true);
-            });
 
             let targetPos = isDriving ? carPos : playerPos;
             let camDistance = isDriving ? 16 : 11;
